@@ -1,0 +1,285 @@
+import numpy as np
+import torch.nn as nn
+from matplotlib import pyplot as plt
+from sklearn.metrics import classification_report
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+import gensim
+import torch
+from torch.utils.data import TensorDataset, DataLoader
+
+import constants
+from vector_model import models
+
+
+class LongShortTermMemory(nn.Module):
+    def __init__(self, model_filename, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5):
+        super(LongShortTermMemory, self).__init__()
+
+        self.output_dim = output_dim
+        self.hidden_dim = hidden_dim
+
+        self.no_layers = no_layers
+        # self.vocab_size = vocab_size
+
+        # embedding and LSTM layers
+        # self.embedding = nn.Embedding(vocab_size, embedding_dim)
+
+        vec_model = gensim.models.KeyedVectors.load(model_filename)
+        weights = vec_model.wv
+        self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(weights.vectors))
+        # self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(weights.vectors),
+        #                                                   padding_idx=vec_model.wv.key_to_index['pad'])
+
+        # lstm
+        # self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=self.hidden_dim,
+        #                     num_layers=no_layers, batch_first=True)
+        self.lstm = nn.LSTM(input_size=vec_model.vector_size, hidden_size=self.hidden_dim,
+                            num_layers=no_layers, batch_first=True)
+        # (input_size=embedding_dim, hidden_size=self.hidden_dim,
+        #                             num_layers=no_layers, batch_first=True)
+
+        # dropout layer
+        self.dropout = nn.Dropout(0.2)
+
+        # linear and sigmoid layer
+        self.fc = nn.Linear(self.hidden_dim, output_dim)
+        self.sig = nn.Sigmoid()
+        self.sig2 = nn.Softmax()
+
+    def forward(self, x, hidden):
+        batch_size = x.size(0)
+        # embeddings and lstm_out
+        embeds = self.embedding(x)  # shape: B x S x Feature   since batch = True
+        # print(embeds.shape)  #[50, 500, 1000]
+        lstm_out, hidden = self.lstm(embeds, hidden)
+
+        lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim)
+
+        # dropout and fully connected layer
+        out = self.dropout(lstm_out)
+        out = self.fc(out)
+
+        # sigmoid function
+        sig_out = self.sig(out)
+
+        # sig_out2 = self.sig2(out)
+        # sig_out2 = sig_out2.view(batch_size, -1)
+        # sig_out2 = sig_out2[:, -1]
+
+        # reshape to be batch_size first
+        sig_out = sig_out.view(batch_size, -1)
+        #
+        sig_out = sig_out[:, -1]  # get last batch of labels
+        # sig_out = out[:, -1]  # get last batch of labels
+
+        # return last sigmoid output and hidden state
+        return sig_out, hidden
+
+    def init_hidden(self, batch_size, device):
+        ''' Initializes hidden state '''
+        # Create two new tensors with sizes n_layers x batch_size x hidden_dim,
+        # initialized to zero, for hidden state and cell state of LSTM
+        h0 = torch.zeros((self.no_layers, batch_size, self.hidden_dim)).to(device)
+        c0 = torch.zeros((self.no_layers, batch_size, self.hidden_dim)).to(device)
+        hidden = (h0, c0)
+        return hidden
+
+
+def training_LSTM(vec_model, model_file, device, max_sen_len, X_train, X_test, Y_train_sentiment, Y_test_sentiment,
+                  binary=False, batch_size=1):
+    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train['stemmed_tokens']]
+    X_train = np.array(X_train)
+    X_test = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_test['stemmed_tokens']]
+    X_test = np.array(X_test)
+    Y_train = Y_train_sentiment.to_numpy()
+    Y_test = Y_test_sentiment.to_numpy()
+    train_data = TensorDataset(torch.from_numpy(X_train), torch.from_numpy(Y_train))
+    valid_data = TensorDataset(torch.from_numpy(X_test), torch.from_numpy(Y_test))
+    train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
+    valid_loader = DataLoader(valid_data, shuffle=True, batch_size=batch_size)
+
+    no_layers = 2
+    # vocab_size = len(vocab) + 1  # extra 1 for padding
+    embedding_dim = 64
+    output_dim = 3
+    hidden_dim = 256
+
+    lstm_model = LongShortTermMemory(model_file, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5)
+
+    # moving to gpu
+    lstm_model.to(device)
+
+    # loss and optimization functions
+    lr = 0.001
+    # if binary:
+    #     criterion = nn.BCELoss()
+    # else:
+    #     criterion = nn.CrossEntropyLoss()
+    # criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCELoss()
+
+    optimizer = torch.optim.Adam(lstm_model.parameters(), lr=lr)
+
+    # function to predict accuracy
+    def acc(pred, label):
+        pred = torch.round(pred.squeeze())
+        return torch.sum(pred == label.squeeze()).item()
+
+    clip = 5
+    epochs = 5
+    valid_loss_min = np.Inf
+    # train for some number of epochs
+    epoch_tr_loss, epoch_vl_loss = [], []
+    epoch_tr_acc, epoch_vl_acc = [], []
+
+    for epoch in range(epochs):
+        train_losses = []
+        train_acc = 0.0
+        lstm_model.train()
+        # initialize hidden state
+        h = lstm_model.init_hidden(batch_size, device)
+        for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            # Creating new variables for the hidden state, otherwise
+            # we'd backprop through the entire training history
+            h = tuple([each.data for each in h])
+
+            lstm_model.zero_grad()
+            output, h = lstm_model(inputs, h)
+
+            # calculate the loss and perform backprop
+            # loss = criterion(output.squeeze(), labels.float())
+            loss = criterion(output, labels.float())  # if batch_size = 1
+            loss.backward()
+            train_losses.append(loss.item())
+            # calculating accuracy
+            accuracy = acc(output, labels)
+            train_acc += accuracy
+            # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
+            nn.utils.clip_grad_norm_(lstm_model.parameters(), clip)
+            optimizer.step()
+
+        val_h = lstm_model.init_hidden(batch_size, device)
+        val_losses = []
+        val_acc = 0.0
+        lstm_model.eval()
+        for inputs, labels in valid_loader:
+            val_h = tuple([each.data for each in val_h])
+
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            output, val_h = lstm_model(inputs, val_h)
+            # val_loss = criterion(output.squeeze(), labels.float())
+            val_loss = criterion(output, labels.float())  # if batch_size = 1
+
+            val_losses.append(val_loss.item())
+
+            accuracy = acc(output, labels)
+            val_acc += accuracy
+
+        epoch_train_loss = np.mean(train_losses)
+        epoch_val_loss = np.mean(val_losses)
+        epoch_train_acc = train_acc / len(train_loader.dataset)
+        epoch_val_acc = val_acc / len(valid_loader.dataset)
+        epoch_tr_loss.append(epoch_train_loss)
+        epoch_vl_loss.append(epoch_val_loss)
+        epoch_tr_acc.append(epoch_train_acc)
+        epoch_vl_acc.append(epoch_val_acc)
+        # print(f'Epoch {epoch + 1}')
+        # print(f'train_loss : {epoch_train_loss} val_loss : {epoch_val_loss}')
+        # print(f'train_accuracy : {epoch_train_acc * 100} val_accuracy : {epoch_val_acc * 100}')
+        if epoch_val_loss <= valid_loss_min:
+            torch.save(lstm_model.state_dict(), constants.DATA_FOLDER + 'state_dict.pt')
+            # print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min,
+            #                                                                                 epoch_val_loss))
+            valid_loss_min = epoch_val_loss
+        # print(25 * '==')
+
+    fig = plt.figure(figsize=(20, 6))
+    plt.subplot(1, 2, 1)
+    plt.plot(epoch_tr_acc, label='Train Acc')
+    plt.plot(epoch_vl_acc, label='Validation Acc')
+    plt.title("Accuracy")
+    plt.legend()
+    plt.grid()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epoch_tr_loss, label='Train loss')
+    plt.plot(epoch_vl_loss, label='Validation loss')
+    plt.title("Loss")
+    plt.legend()
+    plt.grid()
+
+    plt.show()
+
+    return lstm_model
+
+# def testing_LSTM_2():
+#     batch_acc = []
+#     for batch_idx, batch in enumerate(test_dl):
+#         input = batch[0].to(device)
+#         target = batch[1].to(device)
+#
+#         optimizer.zero_grad()
+#         with torch.set_grad_enabled(False):
+#             out, hidden = model(input, (h0, c0))
+#             _, preds = torch.max(out, 1)
+#             preds = preds.to("cpu").tolist()
+#             batch_acc.append(accuracy_score(preds, target.tolist()))
+#
+#     sum(batch_acc) / len(batch_acc)
+def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test_sentiment):
+    # bow_cnn_predictions = []
+    # original_lables_cnn_bow = []
+    # lstm_model.eval()
+    # loss_df = pd.read_csv(constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv')
+    # util.output(loss_df.columns)
+    # # loss_df.plot('loss')
+    # with torch.no_grad():
+    #     # for index, row in X_test.iterrows():
+    #     index = 0
+    #     for tags in X_test:
+    #         # bow_vec = models.make_word2vec_vector_cnn(vec_model, row['stemmed_tokens'], device, max_sen_len)
+    #         vec = models.make_w2vec_vector(vec_model, tags, max_sen_len)
+    #         inputs = np.expand_dims(vec, axis=0)
+    #         inputs = torch.from_numpy(inputs)
+    #         batch_size = 1
+    #         h = lstm_model.init_hidden(batch_size, device)
+    #         h = tuple([each.data for each in h])
+    #         probs, h = lstm_model(inputs, h)
+    #         # probs = lstm_model(vec)
+    #         _, predicted = torch.max(probs.data, 1)
+    #         bow_cnn_predictions.append(predicted.cpu().numpy()[0])
+    #         # original_lables_cnn_bow.append(make_target(Y_test_sentiment[index], device).cpu().numpy()[0])
+    #         original_lables_cnn_bow.append(torch.tensor([Y_test_sentiment[index]], dtype=torch.long).cpu().numpy()[0])
+    #         index += 1
+    # util.output(classification_report(original_lables_cnn_bow, bow_cnn_predictions))
+
+    bow_cnn_predictions = []
+    lstm_model.eval()
+    with torch.no_grad():
+        i = 0
+        for tags in X_test:
+            # print(text)
+            # tokens = simple_preprocess(text, deacc=True)
+            # tags = [czech_stemmer.cz_stem(word) for word in tokens]
+            vec = models.make_w2vec_vector(vec_model, tags, max_sen_len)
+
+            inputs = np.expand_dims(vec, axis=0)
+            inputs = torch.from_numpy(inputs)
+            batch_size = 1
+            h = lstm_model.init_hidden(batch_size, device)
+            h = tuple([each.data for each in h])
+            output, h = lstm_model(inputs, h)
+            if output < 0.5:
+                bow_cnn_predictions.append(0)
+            # elif output < 0.9999:
+            #     bow_cnn_predictions.append(1)
+            else:
+                bow_cnn_predictions.append(1)
+            status = "Positive" if output > 0.5 else "Negative"
+            output = (1 - output) if status == "Negative" else output
+            print(f'Predicted sentiment is {status} with a probability of {output}')
+            print(f'Actual sentiment is  : {Y_test_sentiment[i]}')
+            i += 1
+    print(classification_report(Y_test_sentiment, bow_cnn_predictions))
