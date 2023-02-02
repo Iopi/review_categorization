@@ -62,7 +62,7 @@ def training_FFNN(review_dict, device, X_train, Y_train_sentiment):
     hidden_dim = 500  # default 500
     output_dim = 3
     # num_epochs = 1
-    num_epochs = 100  # default 100
+    num_epochs = 10  # default 100
 
     ff_nn_bow_model = FeedforwardNeuralNetModel(input_dim, hidden_dim, output_dim)
     ff_nn_bow_model.to(device)
@@ -90,8 +90,8 @@ def training_FFNN(review_dict, device, X_train, Y_train_sentiment):
             optimizer.zero_grad()
 
             # Make the bag of words vector for stemmed tokens
-            bow_vec = models.make_bow_vector(review_dict, row['stemmed_tokens'], device)
-            # bow_vec = models.make_word2vec_vector_cnn(model, row['stemmed_tokens'], device, max_sen_len)
+            bow_vec = models.make_bow_vector(review_dict, row['tokens'], device)
+            # bow_vec = models.make_word2vec_vector_cnn(model, row['tokens'], device, max_sen_len)
 
 
             # Forward pass to get output
@@ -123,7 +123,7 @@ def testing_FFNN(review_dict, ff_nn_bow_model, ffnn_loss_file_name, device, X_te
     original_lables_ff_bow = []
     with torch.no_grad():
         for index, row in X_test.iterrows():
-            bow_vec = models.make_bow_vector(review_dict, row['stemmed_tokens'], device)
+            bow_vec = models.make_bow_vector(review_dict, row['tokens'], device)
             probs = ff_nn_bow_model(bow_vec)
             bow_ff_nn_predictions.append(torch.argmax(probs, dim=1).cpu().numpy()[0])
             original_lables_ff_bow.append(preprocessing_methods.make_target(Y_test_sentiment[index], device).cpu().numpy()[0])

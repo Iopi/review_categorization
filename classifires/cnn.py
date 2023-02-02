@@ -100,8 +100,8 @@ def training_CNN(model, model_filename, device, max_sen_len, X_train, Y_train_se
             cnn_model.zero_grad()
 
             # Make the bag of words vector for stemmed tokens
-            bow_vec = models.make_word2vec_vector_cnn(model, row['stemmed_tokens'], device, max_sen_len)
-            # bow_vec = models.make_fasttext_vector_cnn(model, row['stemmed_tokens'], device, max_sen_len)
+            bow_vec = models.make_word2vec_vector_cnn(model, row['tokens'], device, max_sen_len)
+            # bow_vec = models.make_fasttext_vector_cnn(model, row['tokens'], device, max_sen_len)
 
             # Forward pass to get util.output
             probs = cnn_model(bow_vec)
@@ -148,7 +148,7 @@ def testing_CNN(cnn_model, word2vec_file, w2v_model, device, max_sen_len, X_test
     # loss_df.plot('loss')
     with torch.no_grad():
         for index, row in X_test.iterrows():
-            bow_vec = models.make_word2vec_vector_cnn(w2v_model, row['stemmed_tokens'], device, max_sen_len)
+            bow_vec = models.make_word2vec_vector_cnn(w2v_model, row['tokens'], device, max_sen_len)
             probs = cnn_model(bow_vec)
             _, predicted = torch.max(probs.data, 1)
             bow_cnn_predictions.append(predicted.cpu().numpy()[0])

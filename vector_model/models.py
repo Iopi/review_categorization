@@ -15,11 +15,12 @@ import util
 import constants
 
 
-def make_fasttext_model(top_data_df_small, lang, sg=1, min_count=1, vector_size=300, workers=3, window=5):
-    temp_df = top_data_df_small['stemmed_tokens']
+def make_fasttext_model(temp_df, sg=1, min_count=1, vector_size=300, workers=3, window=5, fasttext_file=None):
     ft_model = FastText(sg=sg, vector_size=vector_size, window=window, min_count=min_count, workers=workers,
                         sentences=temp_df)
-    fasttext_file = constants.DATA_FOLDER + 'models/' + 'fasttext_' + str(vector_size) + "_" + lang + '.model'
+
+    if fasttext_file is None:
+        fasttext_file = constants.DATA_FOLDER + 'models/' + 'fasttext_' + str(vector_size) + "_" + '.model'
     ft_model.save(fasttext_file)
 
     return ft_model, fasttext_file
@@ -41,12 +42,12 @@ def make_fasttext_vector_cnn(w2v_model, sentence, device, max_sen_len):
 def make_word2vec_model(top_data_df_small, padding=True, sg=1, min_count=1, vector_size=500, workers=3, window=3):
     if padding:
         # util.output(len(top_data_df_small))
-        temp_df = pd.Series(top_data_df_small['stemmed_tokens']).values
+        temp_df = pd.Series(top_data_df_small['tokens']).values
         temp_df = list(temp_df)
         temp_df.append(['pad'])
         word2vec_file = constants.DATA_FOLDER + 'models/' + 'word2vec_' + str(vector_size) + '_PAD.model'
     else:
-        temp_df = top_data_df_small['stemmed_tokens']
+        temp_df = top_data_df_small['tokens']
         word2vec_file = constants.DATA_FOLDER + 'models/' + 'word2vec_' + str(vector_size) + '.model'
     w2v_model = Word2Vec(temp_df, min_count=min_count, vector_size=vector_size, workers=workers, window=window, sg=sg)
 
@@ -79,7 +80,7 @@ def make_bow_vector(review_dict, sentence, device):
 
 def create_tfidf_model_file(review_dict, df_sentiment, X_train, filename):
     # BOW corpus is required for tfidf model
-    corpus = [review_dict.doc2bow(line) for line in df_sentiment['stemmed_tokens']]
+    corpus = [review_dict.doc2bow(line) for line in df_sentiment['tokens']]
 
     # TF-IDF Model
     tfidf_model = TfidfModel(corpus)
@@ -89,7 +90,7 @@ def create_tfidf_model_file(review_dict, df_sentiment, X_train, filename):
     vocab_len = len(review_dict.token2id)
     with open(filename, 'w+') as tfidf_file:
         for index, row in X_train.iterrows():
-            doc = review_dict.doc2bow(row['stemmed_tokens'])
+            doc = review_dict.doc2bow(row['tokens'])
             features = gensim.matutils.corpus2csc([tfidf_model[doc]], num_terms=vocab_len).toarray()[:, 0]
             if index == 0:
                 header = ",".join(str(review_dict[ele]) for ele in range(vocab_len))
@@ -109,7 +110,7 @@ def create_bow_model_file(review_dict, df_sentiment, X_train, filename):
     vocab_len = len(review_dict)
     with open(filename, 'w+') as bow_file:
         for index, row in X_train.iterrows():
-            features = gensim.matutils.corpus2csc([review_dict.doc2bow(row['stemmed_tokens'])],
+            features = gensim.matutils.corpus2csc([review_dict.doc2bow(row['tokens'])],
                                                   num_terms=vocab_len).toarray()[:, 0]
             if index == 0:
                 util.output("Header")
@@ -128,15 +129,37 @@ def make_w2vec_vector(model, sentence, max_sen_len):
     sentence_len = len(sentence)
     sentence_vec = [0] * max_sen_len
     i = max_sen_len - sentence_len
+    not_in = 0
+    in_in = 0
     for word in sentence:
-        if word not in model.wv.key_to_index:
+        if word not in model.key_to_index:
+            # w2v_model.build_vocab(new_sentences, update=True)  # Update the vocabulary
+            # w2v_model.train(new_sentences, total_examples=len(new_sentences), epochs=model.epochs)
+            sentence_vec[i] = 0
+            # sentence_vec[i] = w2v_model.wv[word]
+            # util.output(word)
+            not_in += 1
+        else:
+            sentence_vec[i] = model.key_to_index[word]
+            in_in += 1
+        i += 1
+
+
+
+    return sentence_vec
+def make_w2vec_vector_keyvector(model, sentence, max_sen_len):
+    sentence_len = len(sentence)
+    sentence_vec = [0] * max_sen_len
+    i = max_sen_len - sentence_len
+    for word in sentence:
+        if word not in model.key_to_index:
             # w2v_model.build_vocab(new_sentences, update=True)  # Update the vocabulary
             # w2v_model.train(new_sentences, total_examples=len(new_sentences), epochs=model.epochs)
             sentence_vec[i] = 0
             # sentence_vec[i] = w2v_model.wv[word]
             # util.output(word)
         else:
-            sentence_vec[i] = model.wv.key_to_index[word]
+            sentence_vec[i] = model.key_to_index[word]
         i += 1
 
     return sentence_vec
@@ -146,16 +169,16 @@ def make_dict(top_data_df_small, padding=True):
     if padding:
         util.output("Dictionary with padded token added")
         review_dict = corpora.Dictionary([['pad']])
-        review_dict.add_documents(top_data_df_small['stemmed_tokens'])
+        review_dict.add_documents(top_data_df_small['tokens'])
     else:
         util.output("Dictionary without padding")
-        review_dict = corpora.Dictionary(top_data_df_small['stemmed_tokens'])
+        review_dict = corpora.Dictionary(top_data_df_small['tokens'])
     return review_dict
 
 
 
-def load_w2vec_model(data_df_ranked):
-    word2vec_file = constants.DATA_FOLDER + 'models/' + constants.W2V_PAD_MODEL_NAME
+def load_w2vec_model(data_df_ranked, word2vec_file):
+    # word2vec_file = constants.DATA_FOLDER_TOK_STM + 'fasttext_300_en.bin'
     if constants.CREATE_MODEL:
         w2v_model, word2vec_file = make_word2vec_model(data_df_ranked)
     elif os.path.exists(word2vec_file):
@@ -166,14 +189,14 @@ def load_w2vec_model(data_df_ranked):
     return w2v_model, word2vec_file
 
 
-def load_fasttext_model(data_df_ranked):
-    fasttext_file = constants.DATA_FOLDER + 'models/' + constants.FT_MODEL_NAME
+def load_fasttext_model(data_df_ranked, fasttext_file):
+    # fasttext_file = constants.DATA_FOLDER_TOK_STM + "fasttext_300_en.bin"
     if constants.CREATE_MODEL:
-        ft_model, fasttext_file = make_fasttext_model(data_df_ranked)
+        ft_model, fasttext_file = make_fasttext_model(data_df_ranked['tokens'])
     elif os.path.exists(fasttext_file):
         ft_model = gensim.models.KeyedVectors.load(fasttext_file)
     else:
-        ft_model, fasttext_file = make_fasttext_model(data_df_ranked)
+        ft_model, fasttext_file = make_fasttext_model(data_df_ranked['tokens'])
     return ft_model, fasttext_file
 
 def testing_classificator_with_tfidf(clf_decision, tfidf_model, review_dict, X_test, Y_test_sentiment):
@@ -182,7 +205,7 @@ def testing_classificator_with_tfidf(clf_decision, tfidf_model, review_dict, X_t
 
     # start_time = time.time()
     for index, row in X_test.iterrows():
-        doc = review_dict.doc2bow(row['stemmed_tokens'])
+        doc = review_dict.doc2bow(row['tokens'])
         features = gensim.matutils.corpus2csc([tfidf_model[doc]], num_terms=vocab_len).toarray()[:, 0]
         test_features.append(features)
     test_predictions = clf_decision.predict(test_features)
@@ -196,7 +219,7 @@ def testing_classificator_with_bow(clf_decision, review_dict, X_test, Y_test_sen
 
     # start_time = time.time()
     for index, row in X_test.iterrows():
-        features = gensim.matutils.corpus2csc([review_dict.doc2bow(row['stemmed_tokens'])],
+        features = gensim.matutils.corpus2csc([review_dict.doc2bow(row['tokens'])],
                                               num_terms=vocab_len).toarray()[:, 0]
         test_features.append(features)
     test_predictions = clf_decision.predict(test_features)

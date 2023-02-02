@@ -1,5 +1,6 @@
 import numpy as np
 import torch.nn as nn
+from gensim.models import KeyedVectors
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
@@ -12,7 +13,7 @@ from vector_model import models
 
 
 class LongShortTermMemory(nn.Module):
-    def __init__(self, model_filename, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5):
+    def __init__(self, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename=None, vector_filename=None):
         super(LongShortTermMemory, self).__init__()
 
         self.output_dim = output_dim
@@ -24,8 +25,12 @@ class LongShortTermMemory(nn.Module):
         # embedding and LSTM layers
         # self.embedding = nn.Embedding(vocab_size, embedding_dim)
 
-        vec_model = gensim.models.KeyedVectors.load(model_filename)
-        weights = vec_model.wv
+        if model_filename:
+            vec_model = gensim.models.KeyedVectors.load(model_filename)
+            weights = vec_model.wv
+        else:
+            weights = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
+
         self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(weights.vectors))
         # self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(weights.vectors),
         #                                                   padding_idx=vec_model.wv.key_to_index['pad'])
@@ -33,7 +38,7 @@ class LongShortTermMemory(nn.Module):
         # lstm
         # self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=self.hidden_dim,
         #                     num_layers=no_layers, batch_first=True)
-        self.lstm = nn.LSTM(input_size=vec_model.vector_size, hidden_size=self.hidden_dim,
+        self.lstm = nn.LSTM(input_size=weights.vector_size, hidden_size=self.hidden_dim,
                             num_layers=no_layers, batch_first=True)
         # (input_size=embedding_dim, hidden_size=self.hidden_dim,
         #                             num_layers=no_layers, batch_first=True)
@@ -85,11 +90,11 @@ class LongShortTermMemory(nn.Module):
         return hidden
 
 
-def training_LSTM(vec_model, model_file, device, max_sen_len, X_train, X_test, Y_train_sentiment, Y_test_sentiment,
-                  binary=False, batch_size=1):
-    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train['stemmed_tokens']]
+def training_LSTM(vec_model, device, max_sen_len, X_train, X_test, Y_train_sentiment, Y_test_sentiment,
+                  binary=False, batch_size=1, model_filename=None, vector_filename=None):
+    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train]
     X_train = np.array(X_train)
-    X_test = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_test['stemmed_tokens']]
+    X_test = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_test]
     X_test = np.array(X_test)
     Y_train = Y_train_sentiment.to_numpy()
     Y_test = Y_test_sentiment.to_numpy()
@@ -104,7 +109,8 @@ def training_LSTM(vec_model, model_file, device, max_sen_len, X_train, X_test, Y
     output_dim = 3
     hidden_dim = 256
 
-    lstm_model = LongShortTermMemory(model_file, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5)
+    lstm_model = LongShortTermMemory(no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
+                                     model_filename=model_filename, vector_filename=vector_filename)
 
     # moving to gpu
     lstm_model.to(device)
@@ -138,7 +144,9 @@ def training_LSTM(vec_model, model_file, device, max_sen_len, X_train, X_test, Y
         lstm_model.train()
         # initialize hidden state
         h = lstm_model.init_hidden(batch_size, device)
+        index = 0
         for inputs, labels in train_loader:
+            index = index + 1
             inputs, labels = inputs.to(device), labels.to(device)
             # Creating new variables for the hidden state, otherwise
             # we'd backprop through the entire training history
@@ -239,7 +247,7 @@ def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test_sent
     #     # for index, row in X_test.iterrows():
     #     index = 0
     #     for tags in X_test:
-    #         # bow_vec = models.make_word2vec_vector_cnn(vec_model, row['stemmed_tokens'], device, max_sen_len)
+    #         # bow_vec = models.make_word2vec_vector_cnn(vec_model, row['tokens'], device, max_sen_len)
     #         vec = models.make_w2vec_vector(vec_model, tags, max_sen_len)
     #         inputs = np.expand_dims(vec, axis=0)
     #         inputs = torch.from_numpy(inputs)
@@ -266,7 +274,8 @@ def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test_sent
             vec = models.make_w2vec_vector(vec_model, tags, max_sen_len)
 
             inputs = np.expand_dims(vec, axis=0)
-            inputs = torch.from_numpy(inputs)
+            torch.from_numpy(inputs).float().to(device)
+            inputs = torch.from_numpy(inputs).to(device)
             batch_size = 1
             h = lstm_model.init_hidden(batch_size, device)
             h = tuple([each.data for each in h])
@@ -277,9 +286,9 @@ def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test_sent
             #     bow_cnn_predictions.append(1)
             else:
                 bow_cnn_predictions.append(1)
-            status = "Positive" if output > 0.5 else "Negative"
-            output = (1 - output) if status == "Negative" else output
-            print(f'Predicted sentiment is {status} with a probability of {output}')
-            print(f'Actual sentiment is  : {Y_test_sentiment[i]}')
+            # status = "Positive" if output > 0.5 else "Negative"
+            # output = (1 - output) if status == "Negative" else output
+            # print(f'Predicted sentiment is {status} with a probability of {output}')
+            # print(f'Actual sentiment is  : {Y_test_sentiment[i]}')
             i += 1
     print(classification_report(Y_test_sentiment, bow_cnn_predictions))

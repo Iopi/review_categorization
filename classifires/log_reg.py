@@ -59,7 +59,7 @@ def training_LogReg(review_dict, device, X_train, Y_train_sentiment):
             lr_nn_model.zero_grad()
 
             # Step 2. Make BOW vector for input features and target label
-            bow_vec = models.make_bow_vector(review_dict, row['stemmed_tokens'], device)
+            bow_vec = models.make_bow_vector(review_dict, row['tokens'], device)
             target = preprocessing_methods.make_target(Y_train_sentiment[index], device)
 
             # Step 3. Run the forward pass.
@@ -80,7 +80,7 @@ def testing_LogReg(review_dict, bow_nn_model, device, X_test, Y_test_sentiment):
     start_time = time.time()
     with torch.no_grad():
         for index, row in X_test.iterrows():
-            bow_vec = models.make_bow_vector(review_dict, row['stemmed_tokens'], device)
+            bow_vec = models.make_bow_vector(review_dict, row['tokens'], device)
             probs = bow_nn_model(bow_vec)
             lr_nn_predictions.append(torch.argmax(probs, dim=1).cpu().numpy()[0])
             original_lables.append(preprocessing_methods.make_target(Y_test_sentiment[index], device).cpu().numpy()[0])

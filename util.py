@@ -1,10 +1,15 @@
 import logging
 
+import fasttext
 import numpy as np
 import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 import seaborn as sns
+import plotly.express as px
+from sklearn.manifold import TSNE
+
+import constants
 
 # now we will Create and configure logger
 logging.basicConfig(filename="std.log",
@@ -42,7 +47,7 @@ def plot_distribution(top_data_df, sentiment):
 
 
 def plot_category_distribution(Y_train, category_name):
-    sentiment_values = pd.Series(Y_train[category_name]).value_counts().sort_index()
+    sentiment_values = pd.Series(Y_train).value_counts().sort_index()
     if len(sentiment_values) == 3:
         sns.barplot(x=np.array(['Neutral', 'Positive', 'Negative']), y=sentiment_values.values).set(title=category_name)
     else:
@@ -74,3 +79,54 @@ def device_recognition():
     # util.output("Device available for running: ")
     # util.output(device)
     return device
+
+
+def plot_top_similar(query_word, model, limit=10, color=['maroon', 'blue']):
+    embed_dim = model.wv.vectors.shape[1]
+    vectors = np.empty((0, embed_dim), dtype='f')
+    labels = [query_word]
+    types = ['Query Word']
+
+    vectors = np.append(vectors, model.wv.__getitem__([query_word]), axis=0)
+
+    similar_words = model.wv.most_similar(query_word, topn=limit)
+    for word, similarity in similar_words:
+        vector = model.wv.__getitem__([word])
+        labels.append(word)
+        types.append('Similar Words')
+        vectors = np.append(vectors, vector, axis=0)
+
+    vectors_tsne = TSNE(perplexity=10, n_components=2, random_state=42, init='pca').fit_transform(vectors)
+    vectors_tsne_df = pd.DataFrame({
+        'X': [x for x in vectors_tsne[:, 0]],
+        'Y': [y for y in vectors_tsne[:, 1]],
+        'label': labels,
+        'Type': types
+    })
+
+    fig = px.scatter(vectors_tsne_df, x='X', y='Y', text='label', color='Type', size_max=60,
+                     color_discrete_map={'Query Word': color[0], 'Similar Words': color[1]})
+    fig.for_each_trace(lambda t: t.update(textfont_color=t.marker.color, textposition='top right'))
+    fig.update_layout(
+        height=800,
+        title_text=f't-SNE visualization for Top {limit} Similar Words to "{query_word}"'
+    )
+
+    return fig
+
+def bin2vec(filepath):
+    f = fasttext.load_model(filepath)
+    filepath = filepath[:-3] + "vec"
+    words = f.get_words()
+    with open(filepath, 'w', encoding="utf-8") as file_out:
+        file_out.write(str(len(words)) + " " + str(f.get_dimension()) + "\n")
+
+        for w in words:
+            v = f.get_word_vector(w)
+            vstr = ""
+            for vi in v:
+                vstr += " " + str(vi)
+            try:
+                file_out.write(w + vstr + '\n')
+            except:
+                pass
