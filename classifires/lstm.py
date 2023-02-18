@@ -9,6 +9,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 import constants
+import util
 from vector_model import models
 
 
@@ -291,4 +292,4 @@ def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test_sent
             # print(f'Predicted sentiment is {status} with a probability of {output}')
             # print(f'Actual sentiment is  : {Y_test_sentiment[i]}')
             i += 1
-    print(classification_report(Y_test_sentiment, bow_cnn_predictions))
+    util.output(classification_report(Y_test_sentiment, bow_cnn_predictions))

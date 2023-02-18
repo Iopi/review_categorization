@@ -1,52 +1,22 @@
-import pandas as pd
 import argparse
-import matplotlib.pyplot as plt
 import time
-import re
-import os.path
-import numpy as np
-from gensim.models import KeyedVectors
-from gensim.utils import simple_preprocess
 
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
-from sklearn.svm import SVC
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-
-import torch.nn as nn
-# import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
-import torch
-
-import seaborn as sns
-from googletrans import Translator
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import f1_score
-
-import torch.nn.functional as F
-
-from classifires import log_reg, decision_tree, svm, ffnn, cnn, lstm
-from classifires.cnn import ConvolutionalNeuralNetworkClassifier
-from classifires.ffnn import FeedforwardNeuralNetModel
-from classifires.log_reg import LogisticRegressionClassifier
-from classifires.lstm import LongShortTermMemory
-from preprocessing import preprocessing_methods, czech_stemmer
-from vector_model import models
-import util
-import constants
-
-from gensim import corpora
-import gensim
 import fasttext
+import pandas as pd
+from gensim.models import KeyedVectors
+from langdetect import detect_langs
+
+import constants
+import util
+from classifires import lstm
+from preprocessing import preprocessing_methods
+from vector_model import models
+
+
+def print_similarity(vec_model_train, param):
+    print(param)
+    ms = vec_model_train.most_similar(param)
+    print(ms)
 
 
 def classification_sentiments(data_df_ranked, categories, binary, args, test_data_df=None):
@@ -61,21 +31,35 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
     # # load or create fasttext model
     # vec_model, model_filename = models.load_fasttext_model(data_df_ranked, args.model_path)
     # vec_model = vec_model.wv
-    model_filename = args.model_path
-    vec_model_train = gensim.models.KeyedVectors.load(model_filename)
-    vec_model_train = vec_model_train.wv
-    # vector_filename = args.model_path
-    # vec_model_train = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
+
+    # model_filename = args.model_path
+    # vec_model_train = gensim.models.KeyedVectors.load(model_filename)
+    # vec_model_train = vec_model_train.wv
+
+    vector_filename = args.model_path
+    vec_model_train = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
     if args.action == 'cross':
-        vec_model_test = args.model_path_test
+        vec_model_test = KeyedVectors.load_word2vec_format(args.model_path_test, binary=False)
     else:
         vec_model_test = vec_model_train
 
+    # print_similarity(vec_model_train, "personál")
+    # print_similarity(vec_model_train, "jídlo")
+    # print_similarity(vec_model_train, "čisto")
+    # print_similarity(vec_model_train, "kafe")
+    # print_similarity(vec_model_train, "prostředí")
+    # print_similarity(vec_model_train, "drahé")
+    # print_similarity(vec_model_train, "lidi")
+    # print_similarity(vec_model_train, "dnes")
+    # print_similarity(vec_model_train, "prachy")
+    # print_similarity(vec_model_train, "zmrzlina")
+    # print_similarity(vec_model_train, "pití")
+    # print_similarity(vec_model_train, "rychlost")
+    # print_similarity(vec_model_train, "cena")
+    # print_similarity(vec_model_train, "fronta")
 
-
+    df_test = None
     for category_name in categories:
-        # if category_name != 'Staff':
-        #     continue
         start_time_class = time.time()
 
         util.output("Classification sentiment " + category_name)
@@ -100,10 +84,14 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
             X_train, X_test, Y_train, Y_test = preprocessing_methods.split_train_test(df_sentiment, category_name,
                                                                                       test_size=0.25)
         else:
+            if binary:
+                df_test = test_data_df[test_data_df[category_name] != 2]
+            else:
+                df_test = test_data_df[test_data_df[category_name] != 3]
             X_train = df_sentiment['tokens']
             Y_train = df_sentiment[category_name]
-            X_test = test_data_df['tokens']
-            Y_test = test_data_df[category_name]
+            X_test = df_test['tokens']
+            Y_test = df_test[category_name]
 
         # Plotting the sentiment distribution
         util.plot_category_distribution(Y_train, category_name)
@@ -113,10 +101,12 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
 
         # X # LSTM with w2v/fasttext model
         max_sen_len = df_sentiment.tokens.map(len).max()
+        if df_test is not None:
+            max_sen_len_test = df_test.tokens.map(len).max()
+            max_sen_len = max(max_sen_len, max_sen_len_test)
         lstm_model = lstm.training_LSTM(vec_model_train, device, max_sen_len, X_train, X_test, Y_train, Y_test, binary,
                                         batch_size=1, model_filename=model_filename, vector_filename=vector_filename)
         lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test)
-        # lstm.testing_LSTM(lstm_model, vec_model.wv, device, max_sen_len, X_test, Y_test)
 
         # 1 # CNN with w2v/fasttext model
         # max_sen_len = df_sentiment.tokens.map(len).max()
@@ -194,40 +184,52 @@ def create_unsup_lower_split_model(args):
 
     top_data_df['Text'] = top_data_df['Text'].str.lower()
 
+    true_count = 0
+    false_count = 0
     with open(args.feed_path[:-4] + 'txt', 'w', encoding="utf-8") as f:
-        index = 0
-        for line in top_data_df['Text'].values:
-            index += 1
-
+        for line in top_data_df['Text']:
             try:
-                line = re.sub('([.,!?()])', r' \1 ', line)
-                line = re.sub('\s{2,}', ' ', line)
+                detection = [d_lang.lang == args.lang for d_lang in detect_langs(line)]
+                if True in detection:
+                    line = preprocessing_methods.split_line(line, args.lang)
+                    f.write(line)
+                    f.write('\n')
+                    true_count += 1
+                else:
+                    false_count += 1
             except:
-                continue
+                false_count += 1
 
-            f.write(line)
-            f.write('\n')
+            # try:
+            #     line = preprocessing_methods.split_line(line, args.lang)
+            # except:
+            #     continue
+            #
+            # f.write(line)
+            # f.write('\n')
+
+    util.output(f"Deleted reviews due to bad content (language, no text, ..) : {false_count}")
+    util.output(f"Correct reviews : {true_count}")
 
     model = fasttext.train_unsupervised(args.feed_path[:-4] + 'txt', model='skipgram', dim=300)
     # filename = constants.DATA_FOLDER_UNSUPERVISED + "fasttext_unsup_" + args.lang + ".bin"
     filename = args.model_path
     model.save_model(filename)
 
-    # util.bin2vec(filename)
+    util.bin2vec(filename)
 
 
 def create_lower_split_model(args):
     top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
     # lowercase and split .,?!
-    result = preprocessing_methods.lower_split(top_data_df)
+    result = preprocessing_methods.lower_split(top_data_df, args.lang)
 
     models.make_fasttext_model(result, fasttext_file=constants.DATA_FOLDER + 'lower_split_models/' + 'fasttext_300_' +
                                                      args.lang + ".bin")
 
 
-
 def create_token_stem_model(args):
-    top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
+    top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1", nrows=100)
 
     # Tokenize the text column to get the new column 'tokenized_text'
     top_data_df = preprocessing_methods.tokenization(top_data_df, args.lang)
@@ -255,8 +257,9 @@ def parse_agrs():
     parser.add_argument('-l', dest='lang', help='Language of train reviews (and test for mono-lingual classification).')
     parser.add_argument('-ltest', dest='lang_test', help='Language of test reviews.')
     parser.add_argument('-a', dest='action', help="Action of application. 'mono' mono-lingual classification, 'cross' "
-                                                  "cross-lingual classification and 'model' create model to folder "
-                                                  "added to 'model_filename' destination.", default='mono')
+                                                  "cross-lingual classification, 'translate' translate classification "
+                                                  "and 'model' create model to folder added to 'model_filename' "
+                                                  "destination.", default='mono')
 
     args = parser.parse_args()
 
@@ -277,7 +280,7 @@ def parse_agrs():
                 raise Exception("Reviews path for test 'reviews_path_test' must be set.")
             if args.lang_test is None:
                 raise Exception("Language for test 'lang_test' must be set.")
-        elif args.action != 'mono':
+        elif args.action != 'mono' and args.action != 'translate':
             raise Exception(
                 "Wrong argument for action. Action of application. 'mono' mono-lingual classification, 'cross' "
                 "cross-lingual classification and 'model' create model to folder "
@@ -288,32 +291,41 @@ def parse_agrs():
 
 def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args):
     # annotated 1, not annotated 0
+    util.output("Annotated 1, not annotated 0")
     temp_data = reviews_df.copy()
     preprocessing_methods.map_sentiment_annotated(temp_data)
-    if reviews_test_df:
-        preprocessing_methods.map_sentiment_annotated(reviews_test_df)
-        classification_sentiments(temp_data, classes, True, args, reviews_test_df)
-    classification_sentiments(temp_data, classes, True, args)
+    if reviews_test_df is not None:
+        temp_data_test = reviews_test_df.copy()
+        preprocessing_methods.map_sentiment_annotated(temp_data_test)
+        classification_sentiments(temp_data, classes, True, args, temp_data_test)
+    else:
+        classification_sentiments(temp_data, classes, True, args)
 
 
 def classification_sentiments_positive(reviews_df, reviews_test_df, classes, args):
     # positive 1, negative and neutral 0
+    util.output("Positive 1, negative and neutral 0")
     temp_data = reviews_df.copy()
     preprocessing_methods.map_sentiment_positive(temp_data)
-    if reviews_test_df:
-        preprocessing_methods.map_sentiment_positive(reviews_test_df)
-        classification_sentiments(temp_data, classes, True, args, reviews_test_df)
-    classification_sentiments(temp_data, classes, True, args)
+    if reviews_test_df is not None:
+        temp_data_test = reviews_test_df.copy()
+        preprocessing_methods.map_sentiment_positive(temp_data_test)
+        classification_sentiments(temp_data, classes, True, args, temp_data_test)
+    else:
+        classification_sentiments(temp_data, classes, True, args)
 
 
 def classification_sentiments_negative(reviews_df, reviews_test_df, classes, args):
     # negative 1, positive and neutral 0
+    util.output("Negative 1, positive and neutral 0")
     temp_data = reviews_df.copy()
     preprocessing_methods.map_sentiment_negative(temp_data)
-    if reviews_test_df:
-        preprocessing_methods.map_sentiment_negative(reviews_test_df)
-        classification_sentiments(temp_data, classes, True, args, reviews_test_df)
-    classification_sentiments(temp_data, classes, True, args)
+    if reviews_test_df is not None:
+        temp_data_test = reviews_test_df.copy()
+        preprocessing_methods.map_sentiment_negative(temp_data_test)
+        classification_sentiments(temp_data, classes, True, args, temp_data_test)
+    else:
+        classification_sentiments(temp_data, classes, True, args)
 
 
 def main():
@@ -322,16 +334,19 @@ def main():
     reviews_test_df = None
     # only creating model
     if args.action == 'model':
-        create_token_stem_model(args)
+        # create_token_stem_model(args)
         # create_lower_split_model(args)
-        # create_unsup_lower_split_model(args)
+        create_unsup_lower_split_model(args)
         exit(0)
-    elif args.action == 'cross':
+    elif args.action == 'cross' or args.action == 'translate':
         reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1")
         reviews_test_df = reviews_test_df.dropna(thresh=4)
-        reviews_test_df['tokens'] = preprocessing_methods.lower_split(reviews_test_df)
+        if args.action == 'translate':
+            preprocessing_methods.translate_data(reviews_test_df, args.lang_test, args.lang)
+            reviews_test_df['tokens'] = preprocessing_methods.lower_split(reviews_test_df, args.lang)
+        else:
+            reviews_test_df['tokens'] = preprocessing_methods.lower_split(reviews_test_df, args.lang_test)
 
-    # top_data_df = pd.read_excel(constants.DATA_FOLDER + constants.REVIEWS_DATA_NAME, sheet_name="Sheet1", nrows=550)
     reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
     reviews_df = reviews_df.dropna(thresh=4)
 
@@ -342,19 +357,18 @@ def main():
     # preprocessing.remove_stopwords()
     #
     # Tokenize the text column to get the new column 'tokenized_text'
-    preprocessing_methods.tokenization(reviews_df)
+    # preprocessing_methods.tokenization(reviews_df)
 
     # Get the stemmed_tokens
-    preprocessing_methods.stemming(reviews_df, args.lang)
+    # preprocessing_methods.stemming(reviews_df, args.lang)
 
-    # reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df)
+    reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df, args.lang)
 
     classes = reviews_df.columns[1:10]
 
     classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args)
     classification_sentiments_positive(reviews_df, reviews_test_df, classes, args)
     classification_sentiments_negative(reviews_df, reviews_test_df, classes, args)
-
 
     # temp_data = top_data_df.copy()
     # # neutral 0, positive 1 and negative 2

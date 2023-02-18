@@ -105,6 +105,7 @@ def create_tfidf_model_file(review_dict, df_sentiment, X_train, filename):
 
     return tfidf_model
 
+
 def create_bow_model_file(review_dict, df_sentiment, X_train, filename):
     # start_time = time.time()
     vocab_len = len(review_dict)
@@ -144,9 +145,9 @@ def make_w2vec_vector(model, sentence, max_sen_len):
             in_in += 1
         i += 1
 
-
-
     return sentence_vec
+
+
 def make_w2vec_vector_keyvector(model, sentence, max_sen_len):
     sentence_len = len(sentence)
     sentence_vec = [0] * max_sen_len
@@ -164,6 +165,7 @@ def make_w2vec_vector_keyvector(model, sentence, max_sen_len):
 
     return sentence_vec
 
+
 # Function to return the dictionary either with padding word or without padding
 def make_dict(top_data_df_small, padding=True):
     if padding:
@@ -174,7 +176,6 @@ def make_dict(top_data_df_small, padding=True):
         util.output("Dictionary without padding")
         review_dict = corpora.Dictionary(top_data_df_small['tokens'])
     return review_dict
-
 
 
 def load_w2vec_model(data_df_ranked, word2vec_file):
@@ -198,6 +199,7 @@ def load_fasttext_model(data_df_ranked, fasttext_file):
     else:
         ft_model, fasttext_file = make_fasttext_model(data_df_ranked['tokens'])
     return ft_model, fasttext_file
+
 
 def testing_classificator_with_tfidf(clf_decision, tfidf_model, review_dict, X_test, Y_test_sentiment):
     test_features = []
@@ -225,5 +227,3 @@ def testing_classificator_with_bow(clf_decision, review_dict, X_test, Y_test_sen
     test_predictions = clf_decision.predict(test_features)
     util.output(classification_report(Y_test_sentiment, test_predictions))
     # print("Time taken to predict using TF-IDF:" + str(time.time() - start_time))
-
-

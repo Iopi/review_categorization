@@ -1,6 +1,10 @@
+import time
+import numpy as np
 import pandas as pd
 import torch
 from googletrans import Translator
+from easynmt import EasyNMT
+
 from sklearn.model_selection import train_test_split
 import re
 
@@ -33,13 +37,9 @@ def tokenization(top_data_df, lang=None):
     :return:
     """
 
-    counter = 0
     tokens = []
     if lang is not None:
-        # correct_row = [True] * len(top_data_df_small)
-        # correct_row[1] = False
         correct_row = []
-        # top_data_df_small['temp_correct'] = correct_row
 
         for line in top_data_df['Text']:
             try:
@@ -48,28 +48,35 @@ def tokenization(top_data_df, lang=None):
                     tokens.append(simple_preprocess(line, deacc=True))
                     correct_row.append(True)
                 else:
-                    counter += 1
                     correct_row.append(False)
             except:
-                counter += 1
                 correct_row.append(False)
 
-        print(counter)
-        before = len(top_data_df['Text'])
-        print(before)
-        print(len(correct_row))
+        values, counts = np.unique(correct_row, return_counts=True)
+
+        false_count = 0
+        if len(values) != 2:
+            if values[0] == False:
+                raise Exception("All reviews have bad content.")
+            true_count = counts[0]
+        else:
+            if values[0] == False:
+                false_count = counts[0]
+                true_count = counts[1]
+            else:
+                false_count = counts[1]
+                true_count = counts[0]
+
+        util.output(f"Deleted reviews due to bad content (language, no text, ..) : {false_count}")
+        util.output(f"Correct reviews : {true_count}")
         top_data_df['temp_correct'] = correct_row
         top_data_df = top_data_df[top_data_df.temp_correct]
-        print(len(top_data_df['Text']))
-        print(before - counter)
-        print(len(tokens))
         top_data_df.drop(columns='temp_correct')
     else:
         for line in top_data_df['Text']:
             tokens.append(simple_preprocess(line, deacc=True))
 
-    top_data_df['tokenized_text'] = tokens  # TODO KeyError: 'tokenized_text'
-    # top_data_df.loc[:,'tokenized_text'] = tokens # TODO KeyError: 'tokenized_text'
+    top_data_df['tokenized_text'] = tokens
     # top_data_df_small['tokenized_text'] = [simple_preprocess(line, deacc=True) for line in top_data_df_small['Text'].head(10)]
     # util.output(top_data_df['tokenized_text'].head(10))
 
@@ -83,13 +90,13 @@ def stemming(top_data_df_small, lang):
         # tokens = list(tagger.tag(top_data_df_small['tokens'], convert ='strip_lemma_id'))
         # top_data_df_small['tokens'] = tokens
         top_data_df_small['tokens'] = [[czech_stemmer.cz_stem(word) for word in tokens] for tokens in
-                                               top_data_df_small['tokenized_text']]
+                                       top_data_df_small['tokenized_text']]
         # util.output(top_data_df_small['tokens'].head(10))
 
     elif lang == 'en':
         porter = PorterStemmer()
         top_data_df_small['tokens'] = [[porter.stem(word) for word in tokens] for tokens in
-                                               top_data_df_small['tokenized_text']]
+                                       top_data_df_small['tokenized_text']]
 
 
 def get_rank_id_annotated(sentiment):
@@ -210,20 +217,12 @@ def make_target(label, device):
 
 
 def translate_data(data_df, lang_from, lang_to):
-    translator = Translator()
-    # translated_text = translator.translate('ahoj, jak se máš?', src='cs', dest='en')
-    # print(translated_text.text)
-    # for x in data_df['Text']:
-    #     print(x)
-    #     tr = translator.translate(x, src=lang_from, dest=lang_to)
-    #     print(tr.text)
-    #     print(tr)
-
-    data_df['Text'] = [translator.translate(x, src=lang_from, dest=lang_to).text for x in data_df['Text']]
+    model = EasyNMT('opus-mt')
+    data_df['Text'] = [model.translate(x, target_lang=lang_to, source_lang=lang_from) for x in data_df['Text']]
     # print(data_df['Text'].head())
 
 
-def get_preprocessed_data(path, lang_from, lang_to):
+def get_translate_text(path, lang_from, lang_to):
     data_df = pd.read_excel(path, sheet_name="Sheet1")
     data_df = data_df.dropna(thresh=4)
     if lang_from != lang_to:
@@ -234,27 +233,39 @@ def get_preprocessed_data(path, lang_from, lang_to):
     return data_df
 
 
-def split_line(line):
-    try:
-        line = re.sub('([.,!?()])', r' \1 ', line)
-        line = re.sub('\s{2,}', ' ', line)
-    except:
-        return line
-
-
-def lower_split(top_data_df):
+def lower_split(top_data_df, lang):
     top_data_df['lower_split'] = top_data_df['Text'].str.lower()
-    # top_data_df['lower_split'] = [split_line(line) for line in
-    #                               top_data_df['lower_split']]
 
     result = []
     for line in top_data_df['lower_split']:
         try:
-            line = re.sub('([.,!?()])', r' \1 ', line)
-            line = re.sub('\s{2,}', ' ', line)
-            result.append(line)
+            line = split_line(line, lang)
+            result.append(line.split(" "))
         except:
             continue
 
     top_data_df.drop('lower_split', axis=1, inplace=True)
     return result
+
+
+def split_line(line, lang):
+    if lang == 'cs':
+        line = remove_diacritics_cs(line)
+    elif lang == 'de':
+        # line = remove_diacritics_de(line)
+        pass
+    # line = re.sub('([.,!?()])', r' \1 ', line) # odsazeni punktace
+    line = re.sub(r'[.,"\'-?:!;]', ' ', line)  # smazani punktace
+    line = re.sub('\s{2,}', ' ', line)  # sjednoceni mezer
+
+    return line.rstrip()
+
+
+def remove_diacritics_cs(sentence):
+    old_symbols = "áčďéěíňóřšťúůýž"
+    new_symbols = "acdeeinorstuuyz"
+
+    for i in range(len(old_symbols)):
+        sentence = sentence.replace(old_symbols[i], new_symbols[i])
+
+    return sentence
