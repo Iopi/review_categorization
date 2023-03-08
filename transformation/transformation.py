@@ -31,6 +31,8 @@ def eval_similarity(target_model, source_model, target_lang, source_lang, trans_
             i += 1
             sum += simi
             print(line)
+            # print(vec_t)
+            # print(trans_vec_s)
             print(simi)
 
     print(f"sum - {sum / i}")

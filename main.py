@@ -45,7 +45,9 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
     if args.action == 'cross':
         vec_model_test = KeyedVectors.load_word2vec_format(args.model_path_test, binary=False)
         trans_matrix = transformation.compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, args.lang, args.lang_test)
-        # trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang, args.lang_test)
+        transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
+
+        trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang, args.lang_test)
         transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
     else:
         vec_model_test = vec_model_train
@@ -89,7 +91,7 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
         # Call the train_test_split
         if test_data_df is None:
             X_train, X_test, Y_train, Y_test = preprocessing_methods.split_train_test(df_sentiment, category_name,
-                                                                                      test_size=0.25)
+                                                                                      test_size=0.20)
         else:
             if binary:
                 df_test = test_data_df[test_data_df[category_name] != 2]
@@ -111,7 +113,7 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
         if df_test is not None:
             max_sen_len_test = df_test.tokens.map(len).max()
             max_sen_len = max(max_sen_len, max_sen_len_test)
-        lstm_model = lstm.training_LSTM(vec_model_train, vec_model_test, trans_matrix, device, max_sen_len, X_train, X_test, Y_train, Y_test, binary,
+        lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary,
                                         batch_size=1, model_filename=model_filename, vector_filename=vector_filename)
         lstm.testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, X_test, Y_test)
 

@@ -3,6 +3,7 @@ import torch.nn as nn
 from gensim.models import KeyedVectors
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import gensim
 import torch
@@ -14,7 +15,8 @@ from vector_model import models
 
 
 class LongShortTermMemory(nn.Module):
-    def __init__(self, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename=None, vector_filename=None):
+    def __init__(self, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename=None,
+                 vector_filename=None):
         super(LongShortTermMemory, self).__init__()
 
         self.output_dim = output_dim
@@ -91,16 +93,15 @@ class LongShortTermMemory(nn.Module):
         return hidden
 
 
-def training_LSTM(vec_model, vec_model_test, trans_matrix, device, max_sen_len, X_train, X_test, Y_train_sentiment, Y_test_sentiment,
-                  binary=False, batch_size=1, model_filename=None, vector_filename=None):
+def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary=False,
+                  batch_size=1, model_filename=None, vector_filename=None):
     X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len, None) for line in X_train]
     X_train = np.array(X_train)
-    X_test = [models.make_w2vec_vector(vec_model_test, line, max_sen_len, trans_matrix) for line in X_test]
-    X_test = np.array(X_test)
     Y_train = Y_train_sentiment.to_numpy()
-    Y_test = Y_test_sentiment.to_numpy()
+    X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.25,
+                                                          random_state=15)
     train_data = TensorDataset(torch.from_numpy(X_train), torch.from_numpy(Y_train))
-    valid_data = TensorDataset(torch.from_numpy(X_test), torch.from_numpy(Y_test))
+    valid_data = TensorDataset(torch.from_numpy(X_valid), torch.from_numpy(Y_valid))
     train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
     valid_loader = DataLoader(valid_data, shuffle=True, batch_size=batch_size)
 
@@ -222,6 +223,7 @@ def training_LSTM(vec_model, vec_model_test, trans_matrix, device, max_sen_len, 
     plt.show()
 
     return lstm_model
+
 
 # def testing_LSTM_2():
 #     batch_acc = []
