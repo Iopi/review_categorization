@@ -91,11 +91,11 @@ class LongShortTermMemory(nn.Module):
         return hidden
 
 
-def training_LSTM(vec_model, device, max_sen_len, X_train, X_test, Y_train_sentiment, Y_test_sentiment,
+def training_LSTM(vec_model, vec_model_test, trans_matrix, device, max_sen_len, X_train, X_test, Y_train_sentiment, Y_test_sentiment,
                   binary=False, batch_size=1, model_filename=None, vector_filename=None):
-    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train]
+    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len, None) for line in X_train]
     X_train = np.array(X_train)
-    X_test = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_test]
+    X_test = [models.make_w2vec_vector(vec_model_test, line, max_sen_len, trans_matrix) for line in X_test]
     X_test = np.array(X_test)
     Y_train = Y_train_sentiment.to_numpy()
     Y_test = Y_test_sentiment.to_numpy()
@@ -237,7 +237,7 @@ def training_LSTM(vec_model, device, max_sen_len, X_train, X_test, Y_train_senti
 #             batch_acc.append(accuracy_score(preds, target.tolist()))
 #
 #     sum(batch_acc) / len(batch_acc)
-def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test_sentiment):
+def testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, X_test, Y_test_sentiment):
     # bow_cnn_predictions = []
     # original_lables_cnn_bow = []
     # lstm_model.eval()
@@ -272,7 +272,7 @@ def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test_sent
             # print(text)
             # tokens = simple_preprocess(text, deacc=True)
             # tags = [czech_stemmer.cz_stem(word) for word in tokens]
-            vec = models.make_w2vec_vector(vec_model, tags, max_sen_len)
+            vec = models.make_w2vec_vector(vec_model_test, tags, max_sen_len, trans_matrix)
 
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)

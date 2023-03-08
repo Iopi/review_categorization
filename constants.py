@@ -1,4 +1,6 @@
 DATA_FOLDER = 'data/'
+SW_FOLDER = 'data/stopwords/'
+DICT_FOLDER = 'data/dictionary/'
 DATA_FOLDER_UNSUPERVISED = 'data/unsupervised/'
 DATA_FOLDER_TOK_STM = 'data/token_stem_models/'
 DATA_FOLDER_LOW_SPL = 'data/lower_split_models/'

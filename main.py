@@ -10,7 +10,10 @@ import constants
 import util
 from classifires import lstm
 from preprocessing import preprocessing_methods
+from transformation import transformation
 from vector_model import models
+
+from nltk.corpus import stopwords
 
 
 def print_similarity(vec_model_train, param):
@@ -36,24 +39,28 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
     # vec_model_train = gensim.models.KeyedVectors.load(model_filename)
     # vec_model_train = vec_model_train.wv
 
+    trans_matrix = None
     vector_filename = args.model_path
     vec_model_train = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
     if args.action == 'cross':
         vec_model_test = KeyedVectors.load_word2vec_format(args.model_path_test, binary=False)
+        trans_matrix = transformation.compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, args.lang, args.lang_test)
+        # trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang, args.lang_test)
+        transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
     else:
         vec_model_test = vec_model_train
 
-    # print_similarity(vec_model_train, "personál")
-    # print_similarity(vec_model_train, "jídlo")
-    # print_similarity(vec_model_train, "čisto")
+    # print_similarity(vec_model_train, "personal")
+    # print_similarity(vec_model_train, "jidlo")
+    # print_similarity(vec_model_train, "cisto")
     # print_similarity(vec_model_train, "kafe")
-    # print_similarity(vec_model_train, "prostředí")
-    # print_similarity(vec_model_train, "drahé")
+    # print_similarity(vec_model_train, "prostredi")
+    # print_similarity(vec_model_train, "drahe")
     # print_similarity(vec_model_train, "lidi")
     # print_similarity(vec_model_train, "dnes")
     # print_similarity(vec_model_train, "prachy")
     # print_similarity(vec_model_train, "zmrzlina")
-    # print_similarity(vec_model_train, "pití")
+    # print_similarity(vec_model_train, "piti")
     # print_similarity(vec_model_train, "rychlost")
     # print_similarity(vec_model_train, "cena")
     # print_similarity(vec_model_train, "fronta")
@@ -104,9 +111,9 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
         if df_test is not None:
             max_sen_len_test = df_test.tokens.map(len).max()
             max_sen_len = max(max_sen_len, max_sen_len_test)
-        lstm_model = lstm.training_LSTM(vec_model_train, device, max_sen_len, X_train, X_test, Y_train, Y_test, binary,
+        lstm_model = lstm.training_LSTM(vec_model_train, vec_model_test, trans_matrix, device, max_sen_len, X_train, X_test, Y_train, Y_test, binary,
                                         batch_size=1, model_filename=model_filename, vector_filename=vector_filename)
-        lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test)
+        lstm.testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, X_test, Y_test)
 
         # 1 # CNN with w2v/fasttext model
         # max_sen_len = df_sentiment.tokens.map(len).max()
@@ -331,6 +338,13 @@ def classification_sentiments_negative(reviews_df, reviews_test_df, classes, arg
 def main():
     args = parse_agrs()
 
+    # reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
+    # reviews_df = reviews_df.dropna(thresh=4)
+    # reviews_df = reviews_df.sample(frac=1)
+    # reviews_test_df = reviews_df.iloc[1000:, :]
+    # reviews_df = reviews_df.iloc[:1000, :]
+    # preprocessing_methods.translate_data(reviews_test_df, args.lang, args.lang_test)
+
     reviews_test_df = None
     # only creating model
     if args.action == 'model':
@@ -363,6 +377,7 @@ def main():
     # preprocessing_methods.stemming(reviews_df, args.lang)
 
     reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df, args.lang)
+    # preprocessing_methods.remove_bad_words(reviews_df, args.lang)
 
     classes = reviews_df.columns[1:10]
 

@@ -1,3 +1,4 @@
+import os
 import time
 import numpy as np
 import pandas as pd
@@ -19,14 +20,24 @@ from langdetect import detect, detect_langs
 from vector_model import models
 
 
-def remove_bad_words():
+def remove_bad_words(reviews_df, lang):
     """
     Removing the stop words
     :return:
     """
-    util.output(remove_stopwords("Restaurant had a really good service!!"))
-    util.output(remove_stopwords("I did not like the food!!"))
-    util.output(remove_stopwords("This product is not good!!"))
+    if lang == 'cs':
+        filename = constants.SW_FOLDER + "stop_words_czech.txt"
+    elif lang == 'en':
+        filename = constants.SW_FOLDER + "stop_words_english.txt"
+    elif lang == 'de':
+        filename = constants.SW_FOLDER + "stop_words_german.txt"
+    else:
+        raise Exception("Unknown language.")
+
+    with open(filename, encoding='utf-8') as f:
+        stop_words = f.readlines()
+
+    asd = [word for word in reviews_df['tokens'] if word not in stop_words]
 
 
 def tokenization(top_data_df, lang=None):
@@ -269,3 +280,5 @@ def remove_diacritics_cs(sentence):
         sentence = sentence.replace(old_symbols[i], new_symbols[i])
 
     return sentence
+
+
