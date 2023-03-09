@@ -60,12 +60,12 @@ class LongShortTermMemory(nn.Module):
         batch_size = x.size(0)
         # embeddings and lstm_out
         embeds = self.embedding(x)  # shape: B x S x Feature   since batch = True
-        # embeds_numpy = embeds.cpu().numpy()
-        # if self.trans_matrix is not None:
-        #     for i in range(len(embeds_numpy)):
-        #         for j in range(len(embeds_numpy[i])):
-        #             embeds_numpy[i][j] = np.dot(self.trans_matrix, embeds_numpy[i][j])
-        # embeds = torch.from_numpy(embeds_numpy).float().to('cuda')
+        embeds_numpy = embeds.cpu().numpy()
+        if self.trans_matrix is not None:
+            for i in range(len(embeds_numpy)):
+                for j in range(len(embeds_numpy[i])):
+                    embeds_numpy[i][j] = np.dot(self.trans_matrix, embeds_numpy[i][j])
+        embeds = torch.from_numpy(embeds_numpy).float().to('cuda')
 
         # print(embeds.shape)  #[50, 500, 1000]
         lstm_out, hidden = self.lstm(embeds, hidden)
@@ -284,7 +284,7 @@ def testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, 
             # print(text)
             # tokens = simple_preprocess(text, deacc=True)
             # tags = [czech_stemmer.cz_stem(word) for word in tokens]
-            vec = models.make_w2vec_vector(vec_model_test, tags, max_sen_len, trans_matrix)
+            vec = models.make_w2vec_vector(vec_model_test, tags, max_sen_len)
 
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)

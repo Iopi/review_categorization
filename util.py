@@ -1,4 +1,5 @@
 import logging
+import random
 
 import fasttext
 import numpy as np
@@ -130,3 +131,33 @@ def bin2vec(filepath):
                 file_out.write(w + vstr + '\n')
             except:
                 pass
+
+
+def compute_majority_class(Y_train):
+    sentiment_values = pd.Series(Y_train).value_counts().sort_index()
+    values_total = sum(sentiment_values.values)
+    val_0 = sentiment_values.values[0]
+    val_1 = sentiment_values.values[1]
+
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+
+    for x in range(val_1):
+        if random.random() < val_1 / values_total:
+            TP += 1
+        else:
+            FP += 1
+
+    for x in range(val_0):
+        if random.random() < val_0 / values_total:
+            TN += 1
+        else:
+            FN += 1
+
+    recall = TP / (TP + FN)
+    precision = TP / (TP + FP)
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+
+    print(f"MC -> recall: {recall}, precision: {precision}, accuracy: {accuracy}")

@@ -22,35 +22,15 @@ def print_similarity(vec_model_train, param):
     print(ms)
 
 
-def classification_sentiments(data_df_ranked, categories, binary, args, test_data_df=None):
+def classification_sentiments(data_df_ranked, categories, binary, args, model_tuple, test_data_df=None):
     start_time = time.time()
 
-    # load or create word2vec model
-    model_filename = None
-    vector_filename = None
-    # # load or create word2vec model
-    # vec_model, model_filename = models.load_w2vec_model(data_df_ranked, args.model_path)
-    # vec_model = vec_model.wv
-    # # load or create fasttext model
-    # vec_model, model_filename = models.load_fasttext_model(data_df_ranked, args.model_path)
-    # vec_model = vec_model.wv
+    model_filename = model_tuple[0]
+    vector_filename = model_tuple[1]
+    vec_model_train = model_tuple[2]
+    vec_model_test = model_tuple[3]
+    trans_matrix = model_tuple[4]
 
-    # model_filename = args.model_path
-    # vec_model_train = gensim.models.KeyedVectors.load(model_filename)
-    # vec_model_train = vec_model_train.wv
-
-    trans_matrix = None
-    vector_filename = args.model_path
-    vec_model_train = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
-    if args.action == 'cross':
-        vec_model_test = KeyedVectors.load_word2vec_format(args.model_path_test, binary=False)
-        trans_matrix = transformation.compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, args.lang, args.lang_test)
-        transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
-
-        # trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang, args.lang_test)
-        # transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
-    else:
-        vec_model_test = vec_model_train
 
     # print_similarity(vec_model_train, "personal")
     # print_similarity(vec_model_train, "jidlo")
@@ -107,6 +87,8 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
 
         # Use cuda if present
         device = util.device_recognition()
+
+        util.compute_majority_class(Y_train)
 
         # X # LSTM with w2v/fasttext model
         max_sen_len = df_sentiment.tokens.map(len).max()
@@ -298,7 +280,7 @@ def parse_agrs():
     return args
 
 
-def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args):
+def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple):
     # annotated 1, not annotated 0
     util.output("Annotated 1, not annotated 0")
     temp_data = reviews_df.copy()
@@ -306,12 +288,12 @@ def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, ar
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
         preprocessing_methods.map_sentiment_annotated(temp_data_test)
-        classification_sentiments(temp_data, classes, True, args, temp_data_test)
+        classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
     else:
-        classification_sentiments(temp_data, classes, True, args)
+        classification_sentiments(temp_data, classes, True, args, model_tuple)
 
 
-def classification_sentiments_positive(reviews_df, reviews_test_df, classes, args):
+def classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple):
     # positive 1, negative and neutral 0
     util.output("Positive 1, negative and neutral 0")
     temp_data = reviews_df.copy()
@@ -319,12 +301,12 @@ def classification_sentiments_positive(reviews_df, reviews_test_df, classes, arg
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
         preprocessing_methods.map_sentiment_positive(temp_data_test)
-        classification_sentiments(temp_data, classes, True, args, temp_data_test)
+        classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
     else:
-        classification_sentiments(temp_data, classes, True, args)
+        classification_sentiments(temp_data, classes, True, args, model_tuple)
 
 
-def classification_sentiments_negative(reviews_df, reviews_test_df, classes, args):
+def classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple):
     # negative 1, positive and neutral 0
     util.output("Negative 1, positive and neutral 0")
     temp_data = reviews_df.copy()
@@ -332,10 +314,41 @@ def classification_sentiments_negative(reviews_df, reviews_test_df, classes, arg
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
         preprocessing_methods.map_sentiment_negative(temp_data_test)
-        classification_sentiments(temp_data, classes, True, args, temp_data_test)
+        classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
     else:
-        classification_sentiments(temp_data, classes, True, args)
+        classification_sentiments(temp_data, classes, True, args, model_tuple)
 
+
+def load_models_and_trans_matrix(args):
+    model_filename = None
+    vector_filename = None
+    # TODO if model file
+    # # load or create word2vec model
+    # vec_model, model_filename = models.load_w2vec_model(data_df_ranked, args.model_path)
+    # vec_model = vec_model.wv
+    # # load or create fasttext model
+    # vec_model, model_filename = models.load_fasttext_model(data_df_ranked, args.model_path)
+    # vec_model = vec_model.wv
+
+    # model_filename = args.model_path
+    # vec_model_train = gensim.models.KeyedVectors.load(model_filename)
+    # vec_model_train = vec_model_train.wv
+
+    # if vector file
+    trans_matrix = None
+    vector_filename = args.model_path
+    vec_model_train = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
+    if args.action == 'cross':
+        vec_model_test = KeyedVectors.load_word2vec_format(args.model_path_test, binary=False)
+        # trans_matrix = transformation.compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, args.lang,
+        #                                                                   args.lang_test)
+        trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang,
+                                                                          args.lang_test)
+        transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
+    else:
+        vec_model_test = vec_model_train
+
+    return model_filename, vector_filename, vec_model_train, vec_model_test, trans_matrix
 
 def main():
     args = parse_agrs()
@@ -381,11 +394,14 @@ def main():
     reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df, args.lang)
     # preprocessing_methods.remove_bad_words(reviews_df, args.lang)
 
+    # load models and compute transform matrix if cross-lingual
+    model_tuple = load_models_and_trans_matrix(args)
+
     classes = reviews_df.columns[1:10]
 
-    classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args)
-    classification_sentiments_positive(reviews_df, reviews_test_df, classes, args)
-    classification_sentiments_negative(reviews_df, reviews_test_df, classes, args)
+    classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
+    classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple)
+    classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple)
 
     # temp_data = top_data_df.copy()
     # # neutral 0, positive 1 and negative 2

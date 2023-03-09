@@ -31,9 +31,10 @@ def eval_similarity(target_model, source_model, target_lang, source_lang, trans_
             i += 1
             sum += simi
             print(line)
-            # print(vec_t)
-            # print(trans_vec_s)
+            # print(vec_t[:10])
+            # print(trans_vec_s[:10]) # hodnoty vektoru nejsou vubec mezi -1:1
             print(simi)
+            print()
 
     print(f"sum - {sum / i}")
 
@@ -69,7 +70,13 @@ def compute_transform_matrix_regression(target_model, source_model, target_lang,
 
         trans_matrix = np.dot(trans_matrix_1, trans_matrix_2)
 
-    return trans_matrix
+        # x = np.dot(trans_matrix, vec_s)
+        # print(vec_t[:10])
+        # print(x[:10])
+        # print(cosine_similarity(x[:5], vec_t[:5]))
+        # print(cosine_similarity(x[:10], vec_t[:10]))
+        # print(cosine_similarity(x, vec_t))
+    return trans_matrix.T
 
 
 def compute_transform_matrix_orthogonal(target_model, source_model, target_lang, source_lang):
@@ -103,5 +110,10 @@ def compute_transform_matrix_orthogonal(target_model, source_model, target_lang,
         V = V_T.T[:, :len(s)]
         U_T = U.T
         trans_matrix = np.dot(V, U_T)
-
-    return trans_matrix
+        # x = np.dot(trans_matrix.T, vec_s)
+        # print(vec_t[:10])
+        # print(x[:10])
+        # print(cosine_similarity(x[:5], vec_t[:5]))
+        # print(cosine_similarity(x[:10], vec_t[:10]))
+        # print(cosine_similarity(x, vec_t))
+    return trans_matrix.T
