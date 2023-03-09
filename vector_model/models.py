@@ -127,7 +127,7 @@ def create_bow_model_file(review_dict, df_sentiment, X_train, filename):
     # util.output("Time taken to create bow for :" + str(time.time() - start_time))
 
 
-def make_w2vec_vector(model, sentence, max_sen_len, trans_matrix):
+def make_w2vec_vector(model, sentence, max_sen_len):
     sentence_len = len(sentence)
     sentence_vec = [0] * max_sen_len
     i = max_sen_len - sentence_len
@@ -142,10 +142,7 @@ def make_w2vec_vector(model, sentence, max_sen_len, trans_matrix):
             # util.output(word)
             not_in += 1
         else:
-            if trans_matrix:
-                sentence_vec[i] = np.dot(trans_matrix, model.key_to_index[word])
-            else:
-                sentence_vec[i] = model.key_to_index[word]
+            sentence_vec[i] = model.key_to_index[word]
             in_in += 1
         i += 1
 

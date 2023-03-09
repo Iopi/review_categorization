@@ -16,7 +16,7 @@ from vector_model import models
 
 class LongShortTermMemory(nn.Module):
     def __init__(self, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename=None,
-                 vector_filename=None):
+                 vector_filename=None, trans_matrix=None):
         super(LongShortTermMemory, self).__init__()
 
         self.output_dim = output_dim
@@ -54,10 +54,19 @@ class LongShortTermMemory(nn.Module):
         self.sig = nn.Sigmoid()
         self.sig2 = nn.Softmax()
 
+        self.trans_matrix = trans_matrix
+
     def forward(self, x, hidden):
         batch_size = x.size(0)
         # embeddings and lstm_out
         embeds = self.embedding(x)  # shape: B x S x Feature   since batch = True
+        # embeds_numpy = embeds.cpu().numpy()
+        # if self.trans_matrix is not None:
+        #     for i in range(len(embeds_numpy)):
+        #         for j in range(len(embeds_numpy[i])):
+        #             embeds_numpy[i][j] = np.dot(self.trans_matrix, embeds_numpy[i][j])
+        # embeds = torch.from_numpy(embeds_numpy).float().to('cuda')
+
         # print(embeds.shape)  #[50, 500, 1000]
         lstm_out, hidden = self.lstm(embeds, hidden)
 
@@ -95,7 +104,7 @@ class LongShortTermMemory(nn.Module):
 
 def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary=False,
                   batch_size=1, model_filename=None, vector_filename=None):
-    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len, None) for line in X_train]
+    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train]
     X_train = np.array(X_train)
     Y_train = Y_train_sentiment.to_numpy()
     X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.25,
@@ -112,7 +121,8 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     hidden_dim = 256
 
     lstm_model = LongShortTermMemory(no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
-                                     model_filename=model_filename, vector_filename=vector_filename)
+                                     model_filename=model_filename, vector_filename=vector_filename,
+                                     trans_matrix=trans_matrix)
 
     # moving to gpu
     lstm_model.to(device)

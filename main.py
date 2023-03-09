@@ -47,8 +47,8 @@ def classification_sentiments(data_df_ranked, categories, binary, args, test_dat
         trans_matrix = transformation.compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, args.lang, args.lang_test)
         transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
 
-        trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang, args.lang_test)
-        transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
+        # trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang, args.lang_test)
+        # transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
     else:
         vec_model_test = vec_model_train
 
