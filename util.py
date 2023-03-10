@@ -11,6 +11,7 @@ import plotly.express as px
 from sklearn.manifold import TSNE
 
 import constants
+import util
 
 # now we will Create and configure logger
 logging.basicConfig(filename="std.log",
@@ -132,8 +133,13 @@ def bin2vec(filepath):
             except:
                 pass
 
-
 def compute_majority_class(Y_train):
+    sentiment_values = pd.Series(Y_train).value_counts().sort_values(ascending=False)
+    acc = sentiment_values.values[0] / sum(sentiment_values.values)
+    util.output(f"MC -> accuracy: {acc}")
+
+
+def compute_x(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_index()
     values_total = sum(sentiment_values.values)
     val_0 = sentiment_values.values[0]

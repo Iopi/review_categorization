@@ -31,8 +31,8 @@ def eval_similarity(target_model, source_model, target_lang, source_lang, trans_
             i += 1
             sum += simi
             print(line)
-            # print(vec_t[:10])
-            # print(trans_vec_s[:10]) # hodnoty vektoru nejsou vubec mezi -1:1
+            print(vec_t[:10])
+            print(trans_vec_s[:10]) # hodnoty vektoru nejsou vubec mezi -1:1 pro regression
             print(simi)
             print()
 

@@ -120,7 +120,7 @@ def get_rank_id_annotated(sentiment):
 def get_rank_id_positive(sentiment):
     if sentiment == "Positive":
         return 1
-    elif sentiment == "Negative" or sentiment == "Neutral":
+    elif sentiment == "Negative": # or sentiment == "Neutral":
         return 0
     else:
         return 2
@@ -129,7 +129,7 @@ def get_rank_id_positive(sentiment):
 def get_rank_id_negative(sentiment):
     if sentiment == "Negative":
         return 1
-    elif sentiment == "Positive" or sentiment == "Neutral":
+    elif sentiment == "Positive": # or sentiment == "Neutral":
         return 0
     else:
         return 2

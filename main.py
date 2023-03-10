@@ -294,7 +294,7 @@ def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, ar
 
 
 def classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple):
-    # positive 1, negative and neutral 0
+    # positive 1, negative 0
     util.output("Positive 1, negative and neutral 0")
     temp_data = reviews_df.copy()
     preprocessing_methods.map_sentiment_positive(temp_data)
@@ -307,7 +307,7 @@ def classification_sentiments_positive(reviews_df, reviews_test_df, classes, arg
 
 
 def classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple):
-    # negative 1, positive and neutral 0
+    # negative 1, positive 0
     util.output("Negative 1, positive and neutral 0")
     temp_data = reviews_df.copy()
     preprocessing_methods.map_sentiment_negative(temp_data)
