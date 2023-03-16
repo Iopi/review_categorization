@@ -20,10 +20,9 @@ from langdetect import detect, detect_langs
 from vector_model import models
 
 
-def remove_bad_words(reviews_df, lang):
+def remove_bad_words(sentences, lang):
     """
     Removing the stop words
-    :return:
     """
     if lang == 'cs':
         filename = constants.SW_FOLDER + "stop_words_czech.txt"
@@ -35,9 +34,12 @@ def remove_bad_words(reviews_df, lang):
         raise Exception("Unknown language.")
 
     with open(filename, encoding='utf-8') as f:
-        stop_words = f.readlines()
+        stop_words = [line.strip() for line in f.readlines()]
 
-    asd = [word for word in reviews_df['tokens'] if word not in stop_words]
+    for sentence in sentences:
+        sentence[:] = list(filter(lambda word: word not in stop_words, sentence))
+
+    # sentences[:] = [sentence for sentence in sentences if sentence != ['']]
 
 
 def tokenization(top_data_df, lang=None):
@@ -244,18 +246,38 @@ def get_translate_text(path, lang_from, lang_to):
     return data_df
 
 
-def lower_split(top_data_df, lang):
-    top_data_df['lower_split'] = top_data_df['Text'].str.lower()
+def lower_split(top_data_df, lang, check_lang=False):
 
+    # top_data_df['lower_split'] = top_data_df['Text'].str.lower()
+    lost = 0
+    success = 0
     result = []
-    for line in top_data_df['lower_split']:
-        try:
-            line = split_line(line, lang)
-            result.append(line.split(" "))
-        except:
-            continue
+    if check_lang:
+        for line in top_data_df['Text']:
+            try:
+                detection = [d_lang.lang == lang for d_lang in detect_langs(line)]
+                if True in detection:
+                    line = line.lower()
+                    line = split_line(line, lang)
+                    result.append(line.split(" "))
+                    success += 1
+                else:
+                    lost += 1
+            except:
+                lost += 1
+    else:
+        for line in top_data_df['Text']:
+            try:
+                line = line.lower()
+                line = split_line(line, lang)
+                result.append(line.split(" "))
+                success += 1
+            except:
+                lost += 1
 
-    top_data_df.drop('lower_split', axis=1, inplace=True)
+    util.output(f"Deleted reviews due to bad content (language, no text, ..) : {lost}")
+    util.output(f"Correct reviews : {success}")
+    # top_data_df.drop('lower_split', axis=1, inplace=True)
     return result
 
 
@@ -263,14 +285,24 @@ def split_line(line, lang):
     if lang == 'cs':
         line = remove_diacritics_cs(line)
     elif lang == 'de':
-        # line = remove_diacritics_de(line)
+        line = remove_diacritics_de(line)
         pass
     # line = re.sub('([.,!?()])', r' \1 ', line) # odsazeni punktace
-    line = re.sub(r'[.,"\'-?:!;]', ' ', line)  # smazani punktace
+    line = re.sub(r'[.,"\'-?:!;]', ' ', line)  # smazani punktace a nechtenych symbolu
     line = re.sub('\s{2,}', ' ', line)  # sjednoceni mezer
 
     return line.rstrip()
 
+def remove_diacritics_de(sentence):
+    old_symbols = "äöü"
+    new_symbols = "aou"
+
+    sentence = sentence.replace("ß", "ss")
+
+    for i in range(len(old_symbols)):
+        sentence = sentence.replace(old_symbols[i], new_symbols[i])
+
+    return sentence
 
 def remove_diacritics_cs(sentence):
     old_symbols = "áčďéěíňóřšťúůýž"

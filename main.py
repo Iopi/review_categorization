@@ -31,7 +31,6 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
     vec_model_test = model_tuple[3]
     trans_matrix = model_tuple[4]
 
-
     # print_similarity(vec_model_train, "personal")
     # print_similarity(vec_model_train, "jidlo")
     # print_similarity(vec_model_train, "cisto")
@@ -88,7 +87,7 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
         # Use cuda if present
         device = util.device_recognition()
 
-        util.compute_majority_class(Y_train)
+        util.compute_majority_class(Y_test)
 
         # X # LSTM with w2v/fasttext model
         max_sen_len = df_sentiment.tokens.map(len).max()
@@ -213,10 +212,12 @@ def create_unsup_lower_split_model(args):
 def create_lower_split_model(args):
     top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
     # lowercase and split .,?!
-    result = preprocessing_methods.lower_split(top_data_df, args.lang)
+    result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=False)
+    # result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=True)
+    preprocessing_methods.remove_bad_words(result, args.lang)
+    result = [x for x in result if x != ['']]
 
-    models.make_fasttext_model(result, fasttext_file=constants.DATA_FOLDER + 'lower_split_models/' + 'fasttext_300_' +
-                                                     args.lang + ".bin")
+    models.make_fasttext_model(result, fasttext_file=args.model_path)
 
 
 def create_token_stem_model(args):
@@ -253,6 +254,7 @@ def parse_agrs():
                                                   "destination.", default='mono')
 
     args = parser.parse_args()
+    util.output(args)
 
     if args.model_path is None:
         raise Exception("Model path 'model_path' must be set.")
@@ -295,7 +297,7 @@ def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, ar
 
 def classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple):
     # positive 1, negative 0
-    util.output("Positive 1, negative and neutral 0")
+    util.output("Positive 1, negative 0")
     temp_data = reviews_df.copy()
     preprocessing_methods.map_sentiment_positive(temp_data)
     if reviews_test_df is not None:
@@ -308,7 +310,7 @@ def classification_sentiments_positive(reviews_df, reviews_test_df, classes, arg
 
 def classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple):
     # negative 1, positive 0
-    util.output("Negative 1, positive and neutral 0")
+    util.output("Negative 1, positive 0")
     temp_data = reviews_df.copy()
     preprocessing_methods.map_sentiment_negative(temp_data)
     if reviews_test_df is not None:
@@ -350,6 +352,7 @@ def load_models_and_trans_matrix(args):
 
     return model_filename, vector_filename, vec_model_train, vec_model_test, trans_matrix
 
+
 def main():
     args = parse_agrs()
 
@@ -364,8 +367,8 @@ def main():
     # only creating model
     if args.action == 'model':
         # create_token_stem_model(args)
-        # create_lower_split_model(args)
-        create_unsup_lower_split_model(args)
+        create_lower_split_model(args)
+        # create_unsup_lower_split_model(args)
         exit(0)
     elif args.action == 'cross' or args.action == 'translate':
         reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1")
@@ -373,8 +376,14 @@ def main():
         if args.action == 'translate':
             preprocessing_methods.translate_data(reviews_test_df, args.lang_test, args.lang)
             reviews_test_df['tokens'] = preprocessing_methods.lower_split(reviews_test_df, args.lang)
+            preprocessing_methods.remove_bad_words(reviews_test_df['tokens'], args.lang)
+
         else:
             reviews_test_df['tokens'] = preprocessing_methods.lower_split(reviews_test_df, args.lang_test)
+            preprocessing_methods.remove_bad_words(reviews_test_df['tokens'], args.lang_test)
+
+        reviews_test_df = reviews_test_df[reviews_test_df['tokens'].apply(lambda x: x != [''])]
+
 
     reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
     reviews_df = reviews_df.dropna(thresh=4)
@@ -392,7 +401,8 @@ def main():
     # preprocessing_methods.stemming(reviews_df, args.lang)
 
     reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df, args.lang)
-    # preprocessing_methods.remove_bad_words(reviews_df, args.lang)
+    preprocessing_methods.remove_bad_words(reviews_df['tokens'], args.lang)
+    reviews_df = reviews_df[reviews_df['tokens'].apply(lambda x: x != [''])]
 
     # load models and compute transform matrix if cross-lingual
     model_tuple = load_models_and_trans_matrix(args)
@@ -401,7 +411,7 @@ def main():
 
     classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
     classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple)
-    classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple)
+    # classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple)
 
     # temp_data = top_data_df.copy()
     # # neutral 0, positive 1 and negative 2
