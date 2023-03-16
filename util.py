@@ -116,6 +116,7 @@ def plot_top_similar(query_word, model, limit=10, color=['maroon', 'blue']):
 
     return fig
 
+
 def bin2vec(filepath):
     f = fasttext.load_model(filepath)
     filepath = filepath[:-3] + "vec"
@@ -132,6 +133,7 @@ def bin2vec(filepath):
                 file_out.write(w + vstr + '\n')
             except:
                 pass
+
 
 def compute_majority_class(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_values(ascending=False)
@@ -167,3 +169,9 @@ def compute_x(Y_train):
     accuracy = (TP + TN) / (TP + TN + FP + FN)
 
     print(f"MC -> recall: {recall}, precision: {precision}, accuracy: {accuracy}")
+
+
+def print_similarity(vec_model_train, param):
+    print(param)
+    ms = vec_model_train.most_similar(param)
+    print(ms)

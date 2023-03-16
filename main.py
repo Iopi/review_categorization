@@ -16,12 +16,6 @@ from vector_model import models
 from nltk.corpus import stopwords
 
 
-def print_similarity(vec_model_train, param):
-    print(param)
-    ms = vec_model_train.most_similar(param)
-    print(ms)
-
-
 def classification_sentiments(data_df_ranked, categories, binary, args, model_tuple, test_data_df=None):
     start_time = time.time()
 
@@ -31,7 +25,7 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
     vec_model_test = model_tuple[3]
     trans_matrix = model_tuple[4]
 
-    # print_similarity(vec_model_train, "personal")
+    # util.print_similarity(vec_model_train, "personal")
     # print_similarity(vec_model_train, "jidlo")
     # print_similarity(vec_model_train, "cisto")
     # print_similarity(vec_model_train, "kafe")
@@ -82,7 +76,7 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
             Y_test = df_test[category_name]
 
         # Plotting the sentiment distribution
-        util.plot_category_distribution(Y_train, category_name)
+        # util.plot_category_distribution(Y_train, category_name)
 
         # Use cuda if present
         device = util.device_recognition()
@@ -212,8 +206,8 @@ def create_unsup_lower_split_model(args):
 def create_lower_split_model(args):
     top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
     # lowercase and split .,?!
-    result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=False)
-    # result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=True)
+    # result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=False)
+    result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=True)
     preprocessing_methods.remove_bad_words(result, args.lang)
     result = [x for x in result if x != ['']]
 
@@ -236,7 +230,7 @@ def create_token_stem_model(args):
 
 
 def parse_agrs():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Reviews classification.')
     parser.add_argument('-mp', dest='model_path', type=str, help='Destination of model for classification for train'
                                                                  ' (and test for mono-lingual classification).')
     parser.add_argument('-rp', dest='reviews_path', type=str, help='Destination of reviews for classification for'
@@ -273,6 +267,9 @@ def parse_agrs():
                 raise Exception("Reviews path for test 'reviews_path_test' must be set.")
             if args.lang_test is None:
                 raise Exception("Language for test 'lang_test' must be set.")
+        elif args.action == 'monotest':
+            if args.reviews_path_test is None:
+                raise Exception("Reviews path for test 'reviews_path_test' must be set.")
         elif args.action != 'mono' and args.action != 'translate':
             raise Exception(
                 "Wrong argument for action. Action of application. 'mono' mono-lingual classification, 'cross' "
@@ -338,9 +335,9 @@ def load_models_and_trans_matrix(args):
 
     # if vector file
     trans_matrix = None
-    vector_filename = args.model_path
-    vec_model_train = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
+    vec_model_train = KeyedVectors.load_word2vec_format(args.model_path, binary=False)
     if args.action == 'cross':
+        vector_filename = args.model_path_test
         vec_model_test = KeyedVectors.load_word2vec_format(args.model_path_test, binary=False)
         # trans_matrix = transformation.compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, args.lang,
         #                                                                   args.lang_test)
@@ -348,6 +345,7 @@ def load_models_and_trans_matrix(args):
                                                                           args.lang_test)
         transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
     else:
+        vector_filename = args.model_path
         vec_model_test = vec_model_train
 
     return model_filename, vector_filename, vec_model_train, vec_model_test, trans_matrix
@@ -370,7 +368,7 @@ def main():
         create_lower_split_model(args)
         # create_unsup_lower_split_model(args)
         exit(0)
-    elif args.action == 'cross' or args.action == 'translate':
+    elif args.action == 'cross' or args.action == 'translate' or args.action == 'monotest':
         reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1")
         reviews_test_df = reviews_test_df.dropna(thresh=4)
         if args.action == 'translate':

@@ -230,7 +230,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     plt.legend()
     plt.grid()
 
-    plt.show()
+    # plt.show()
 
     return lstm_model
 
