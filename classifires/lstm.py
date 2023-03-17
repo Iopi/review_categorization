@@ -65,7 +65,7 @@ class LongShortTermMemory(nn.Module):
         self.sig = nn.Sigmoid()
         self.sig2 = nn.Softmax()
 
-        self.trans_matrix = trans_matrix
+        self.trans_matrix = None if trans_matrix is None else torch.from_numpy(trans_matrix).float().to('cuda')
 
     def forward(self, x, hidden, train_input):
         batch_size = x.size(0)
@@ -74,14 +74,9 @@ class LongShortTermMemory(nn.Module):
             embeds = self.embedding_train(x)  # shape: B x S x Feature   since batch = True
         else:
             embeds = self.embedding_test(x)  # shape: B x S x Feature   since batch = True
-            if self.trans_matrix:
-                embeds_numpy = embeds.cpu().numpy()
-                for i in range(len(embeds_numpy)):
-                    for j in range(len(embeds_numpy[i])):
-                        embeds_numpy[i][j] = np.dot(self.trans_matrix, embeds_numpy[i][j])
-                embeds = torch.from_numpy(embeds_numpy).float().to('cuda')
-
-            # embeds = torch.matmul(embeds, self.trans_matrix)
+            if self.trans_matrix is not None:
+                for i in range(len(embeds)):
+                    embeds[i] = torch.matmul(self.trans_matrix, embeds[i].T).T
 
         # print(embeds.shape)  #[50, 500, 1000]
         lstm_out, hidden = self.lstm(embeds, hidden)

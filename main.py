@@ -42,6 +42,9 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
     # print_similarity(vec_model_train, "cena")
     # print_similarity(vec_model_train, "fronta")
 
+    # Use cuda if present
+    device = util.device_recognition()
+
     df_test = None
     for category_name in categories:
         start_time_class = time.time()
@@ -80,8 +83,6 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
         # Plotting the sentiment distribution
         # util.plot_category_distribution(Y_train, category_name)
 
-        # Use cuda if present
-        device = util.device_recognition()
 
         util.compute_majority_class(Y_test)
 
@@ -388,7 +389,7 @@ def main():
 
         reviews_test_df = reviews_test_df[reviews_test_df['tokens'].apply(lambda x: x != [''])]
 
-    reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
+    reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1", nrows=100)
     reviews_df = reviews_df.dropna(thresh=4)
 
     # util.output("Columns in the original dataset:\n")
