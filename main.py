@@ -347,9 +347,11 @@ def load_models_and_trans_matrix(args):
     else:
         model_filename_train = args.model_path
         vec_model_train = KeyedVectors.load(model_filename_train)
+        vec_model_train = vec_model_train.wv
         if args.action == 'cross':
             model_filename_test = args.model_path_test
-            vec_model_test = vec_model_train = KeyedVectors.load(model_filename_test)
+            vec_model_test = KeyedVectors.load(model_filename_test)
+            vec_model_test = vec_model_test.wv
             trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test)
         else:
             vec_model_test = vec_model_train
