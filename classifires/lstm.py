@@ -15,8 +15,8 @@ from vector_model import models
 
 
 class LongShortTermMemory(nn.Module):
-    def __init__(self, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename=None,
-                 vector_filename=None, trans_matrix=None):
+    def __init__(self, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename_train=None,
+                 vector_filename_train=None, model_filename_test=None, vector_filename_test=None, trans_matrix=None):
         super(LongShortTermMemory, self).__init__()
 
         self.output_dim = output_dim
@@ -28,20 +28,31 @@ class LongShortTermMemory(nn.Module):
         # embedding and LSTM layers
         # self.embedding = nn.Embedding(vocab_size, embedding_dim)
 
-        if model_filename:
-            vec_model = gensim.models.KeyedVectors.load(model_filename)
-            weights = vec_model.wv
+        if model_filename_train:
+            vec_model_train = gensim.models.KeyedVectors.load(model_filename_train)
+            weights_train = vec_model_train.wv
         else:
-            weights = KeyedVectors.load_word2vec_format(vector_filename, binary=False)
+            weights_train = KeyedVectors.load_word2vec_format(vector_filename_train, binary=False)
 
-        self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(weights.vectors))
+        self.embedding_train = nn.Embedding.from_pretrained(torch.FloatTensor(weights_train.vectors))
+
+        if model_filename_test or vector_filename_test:
+            if model_filename_test:
+                vec_model_test = gensim.models.KeyedVectors.load(model_filename_test)
+                weights_test = vec_model_test.wv
+            else:
+                weights_test = KeyedVectors.load_word2vec_format(vector_filename_test, binary=False)
+
+            self.embedding_test = nn.Embedding.from_pretrained(torch.FloatTensor(weights_test.vectors))
+        else:
+            self.embedding_test = self.embedding_train
         # self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(weights.vectors),
         #                                                   padding_idx=vec_model.wv.key_to_index['pad'])
 
         # lstm
         # self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=self.hidden_dim,
         #                     num_layers=no_layers, batch_first=True)
-        self.lstm = nn.LSTM(input_size=weights.vector_size, hidden_size=self.hidden_dim,
+        self.lstm = nn.LSTM(input_size=weights_train.vector_size, hidden_size=self.hidden_dim,
                             num_layers=no_layers, batch_first=True)
         # (input_size=embedding_dim, hidden_size=self.hidden_dim,
         #                             num_layers=no_layers, batch_first=True)
@@ -56,16 +67,21 @@ class LongShortTermMemory(nn.Module):
 
         self.trans_matrix = trans_matrix
 
-    def forward(self, x, hidden):
+    def forward(self, x, hidden, train_input):
         batch_size = x.size(0)
         # embeddings and lstm_out
-        embeds = self.embedding(x)  # shape: B x S x Feature   since batch = True
-        embeds_numpy = embeds.cpu().numpy()
-        if self.trans_matrix is not None:
-            for i in range(len(embeds_numpy)):
-                for j in range(len(embeds_numpy[i])):
-                    embeds_numpy[i][j] = np.dot(self.trans_matrix, embeds_numpy[i][j])
-        embeds = torch.from_numpy(embeds_numpy).float().to('cuda')
+        if train_input:
+            embeds = self.embedding_train(x)  # shape: B x S x Feature   since batch = True
+        else:
+            embeds = self.embedding_test(x)  # shape: B x S x Feature   since batch = True
+            if self.trans_matrix:
+                embeds_numpy = embeds.cpu().numpy()
+                for i in range(len(embeds_numpy)):
+                    for j in range(len(embeds_numpy[i])):
+                        embeds_numpy[i][j] = np.dot(self.trans_matrix, embeds_numpy[i][j])
+                embeds = torch.from_numpy(embeds_numpy).float().to('cuda')
+
+            # embeds = torch.matmul(embeds, self.trans_matrix)
 
         # print(embeds.shape)  #[50, 500, 1000]
         lstm_out, hidden = self.lstm(embeds, hidden)
@@ -103,7 +119,8 @@ class LongShortTermMemory(nn.Module):
 
 
 def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary=False,
-                  batch_size=1, model_filename=None, vector_filename=None):
+                  batch_size=1, model_filename_train=None, vector_filename_train=None, model_filename_test=None,
+                  vector_filename_test=None):
     X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train]
     X_train = np.array(X_train)
     Y_train = Y_train_sentiment.to_numpy()
@@ -121,7 +138,8 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     hidden_dim = 256
 
     lstm_model = LongShortTermMemory(no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
-                                     model_filename=model_filename, vector_filename=vector_filename,
+                                     model_filename_train=model_filename_train, vector_filename_train=vector_filename_train,
+                                     model_filename_test=model_filename_test, vector_filename_test=vector_filename_test,
                                      trans_matrix=trans_matrix)
 
     # moving to gpu
@@ -165,7 +183,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
             h = tuple([each.data for each in h])
 
             lstm_model.zero_grad()
-            output, h = lstm_model(inputs, h)
+            output, h = lstm_model(inputs, h, True)
 
             # calculate the loss and perform backprop
             # loss = criterion(output.squeeze(), labels.float())
@@ -188,7 +206,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
 
             inputs, labels = inputs.to(device), labels.to(device)
 
-            output, val_h = lstm_model(inputs, val_h)
+            output, val_h = lstm_model(inputs, val_h, True)
             # val_loss = criterion(output.squeeze(), labels.float())
             val_loss = criterion(output, labels.float())  # if batch_size = 1
 
@@ -292,7 +310,7 @@ def testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, 
             batch_size = 1
             h = lstm_model.init_hidden(batch_size, device)
             h = tuple([each.data for each in h])
-            output, h = lstm_model(inputs, h)
+            output, h = lstm_model(inputs, h, False)
             if output < 0.5:
                 bow_cnn_predictions.append(0)
             # elif output < 0.9999:

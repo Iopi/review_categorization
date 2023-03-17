@@ -19,11 +19,13 @@ from nltk.corpus import stopwords
 def classification_sentiments(data_df_ranked, categories, binary, args, model_tuple, test_data_df=None):
     start_time = time.time()
 
-    model_filename = model_tuple[0]
-    vector_filename = model_tuple[1]
-    vec_model_train = model_tuple[2]
-    vec_model_test = model_tuple[3]
-    trans_matrix = model_tuple[4]
+    model_filename_train = model_tuple[0]
+    vector_filename_train = model_tuple[1]
+    model_filename_test = model_tuple[2]
+    vector_filename_test = model_tuple[3]
+    vec_model_train = model_tuple[4]
+    vec_model_test = model_tuple[5]
+    trans_matrix = model_tuple[6]
 
     # util.print_similarity(vec_model_train, "personal")
     # print_similarity(vec_model_train, "jidlo")
@@ -89,7 +91,10 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
             max_sen_len_test = df_test.tokens.map(len).max()
             max_sen_len = max(max_sen_len, max_sen_len_test)
         lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary,
-                                        batch_size=1, model_filename=model_filename, vector_filename=vector_filename)
+                                        batch_size=1, model_filename_train=model_filename_train,
+                                        vector_filename_train=vector_filename_train,
+                                        model_filename_test=model_filename_test,
+                                        vector_filename_test=vector_filename_test)
         lstm.testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, X_test, Y_test)
 
         # 1 # CNN with w2v/fasttext model
@@ -238,14 +243,18 @@ def parse_agrs():
     parser.add_argument('-fp', dest='feed_path', type=str, help='Destination of feed for model creating.')
     parser.add_argument('-mptest', dest='model_path_test', type=str,
                         help='Destination of model for cross-lingual classification for test.')
+    parser.add_argument('-mt', dest='model_type', type=str,
+                        help="Type of model. 'ft' fasttext model, 'w2v' word2vec model, 'vec' vectors format.",
+                        default='vec')
     parser.add_argument('-rptest', dest='reviews_path_test', type=str,
                         help='Destination of test reviews for classification for test.')
     parser.add_argument('-l', dest='lang', help='Language of train reviews (and test for mono-lingual classification).')
     parser.add_argument('-ltest', dest='lang_test', help='Language of test reviews.')
-    parser.add_argument('-a', dest='action', help="Action of application. 'mono' mono-lingual classification, 'cross' "
-                                                  "cross-lingual classification, 'translate' translate classification "
-                                                  "and 'model' create model to folder added to 'model_filename' "
-                                                  "destination.", default='mono')
+    parser.add_argument('-a', dest='action', help="Action of application. 'mono' mono-lingual classification, "
+                                                  "'monotest' mono-lingual classification with separate files for "
+                                                  "train and test, 'cross' cross-lingual classification, 'translate' "
+                                                  "translate classification and 'model' create model to folder added "
+                                                  "to 'model_filename' destination.", default='mono')
 
     args = parser.parse_args()
     util.output(args)
@@ -319,36 +328,33 @@ def classification_sentiments_negative(reviews_df, reviews_test_df, classes, arg
 
 
 def load_models_and_trans_matrix(args):
-    model_filename = None
-    vector_filename = None
-    # TODO if model file
-    # # load or create word2vec model
-    # vec_model, model_filename = models.load_w2vec_model(data_df_ranked, args.model_path)
-    # vec_model = vec_model.wv
-    # # load or create fasttext model
-    # vec_model, model_filename = models.load_fasttext_model(data_df_ranked, args.model_path)
-    # vec_model = vec_model.wv
-
-    # model_filename = args.model_path
-    # vec_model_train = gensim.models.KeyedVectors.load(model_filename)
-    # vec_model_train = vec_model_train.wv
-
-    # if vector file
+    model_filename_train = None
+    vector_filename_train = None
+    model_filename_test = None
+    vector_filename_test = None
     trans_matrix = None
-    vec_model_train = KeyedVectors.load_word2vec_format(args.model_path, binary=False)
-    if args.action == 'cross':
-        vector_filename = args.model_path_test
-        vec_model_test = KeyedVectors.load_word2vec_format(args.model_path_test, binary=False)
-        # trans_matrix = transformation.compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, args.lang,
-        #                                                                   args.lang_test)
-        trans_matrix = transformation.compute_transform_matrix_regression(vec_model_train, vec_model_test, args.lang,
-                                                                          args.lang_test)
-        transformation.eval_similarity(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_matrix)
-    else:
-        vector_filename = args.model_path
-        vec_model_test = vec_model_train
 
-    return model_filename, vector_filename, vec_model_train, vec_model_test, trans_matrix
+    if args.model_type == 'vec':
+        vector_filename_train = args.model_path
+        vec_model_train = KeyedVectors.load_word2vec_format(vector_filename_train, binary=False)
+        if args.action == 'cross':
+            vector_filename_test = args.model_path_test
+            vec_model_test = KeyedVectors.load_word2vec_format(vector_filename_test, binary=False)
+            trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test)
+        else:
+            vec_model_test = vec_model_train
+    else:
+        model_filename_train = args.model_path
+        vec_model_train = KeyedVectors.load(model_filename_train)
+        if args.action == 'cross':
+            model_filename_test = args.model_path_test
+            vec_model_test = vec_model_train = KeyedVectors.load(model_filename_test)
+            trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test)
+        else:
+            vec_model_test = vec_model_train
+
+    return model_filename_train, vector_filename_train, model_filename_test, vector_filename_test, vec_model_train, \
+           vec_model_test, trans_matrix
 
 
 def main():
@@ -381,7 +387,6 @@ def main():
             preprocessing_methods.remove_bad_words(reviews_test_df['tokens'], args.lang_test)
 
         reviews_test_df = reviews_test_df[reviews_test_df['tokens'].apply(lambda x: x != [''])]
-
 
     reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
     reviews_df = reviews_df.dropna(thresh=4)

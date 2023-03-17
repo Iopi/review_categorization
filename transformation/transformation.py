@@ -117,3 +117,11 @@ def compute_transform_matrix_orthogonal(target_model, source_model, target_lang,
         # print(cosine_similarity(x[:10], vec_t[:10]))
         # print(cosine_similarity(x, vec_t))
     return trans_matrix.T
+
+
+def get_trans_matrix(vec_model_train, vec_model_test, lang, lang_test):
+    trans_matrix = compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, lang, lang_test)
+    # trans_matrix = compute_transform_matrix_regression(vec_model_train, vec_model_test, lang, lang_test)
+    eval_similarity(vec_model_train, vec_model_test, lang, lang_test, trans_matrix)
+
+    return trans_matrix
