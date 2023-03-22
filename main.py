@@ -96,7 +96,7 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
                                         vector_filename_train=vector_filename_train,
                                         model_filename_test=model_filename_test,
                                         vector_filename_test=vector_filename_test)
-        lstm.testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, X_test, Y_test)
+        lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test)
 
         # 1 # CNN with w2v/fasttext model
         # max_sen_len = df_sentiment.tokens.map(len).max()
@@ -223,7 +223,7 @@ def create_lower_split_model(args):
 
 
 def create_token_stem_model(args):
-    top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1", nrows=100)
+    top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
 
     # Tokenize the text column to get the new column 'tokenized_text'
     top_data_df = preprocessing_methods.tokenization(top_data_df, args.lang)
@@ -280,7 +280,7 @@ def parse_agrs():
                 raise Exception("Reviews path for test 'reviews_path_test' must be set.")
             if args.lang_test is None:
                 raise Exception("Language for test 'lang_test' must be set.")
-        elif args.action == 'monotest' or args.action != 'translate':
+        elif args.action == 'monotest' or args.action == 'translate':
             if args.reviews_path_test is None:
                 raise Exception("Reviews path for test 'reviews_path_test' must be set.")
             if args.lang_test is None:

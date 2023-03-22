@@ -262,7 +262,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
 #             batch_acc.append(accuracy_score(preds, target.tolist()))
 #
 #     sum(batch_acc) / len(batch_acc)
-def testing_LSTM(lstm_model, vec_model_test, trans_matrix, device, max_sen_len, X_test, Y_test_sentiment):
+def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment):
     # bow_cnn_predictions = []
     # original_lables_cnn_bow = []
     # lstm_model.eval()
