@@ -212,11 +212,13 @@ def create_unsup_lower_split_model(args):
 def create_lower_split_model(args):
     top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
     # lowercase and split .,?!
-    # result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=False)
-    result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=True)
-    preprocessing_methods.remove_bad_words(result, args.lang)
+    result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=False)
+    # result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=True)
+    # preprocessing_methods.remove_bad_words(result, args.lang)
+    len_before = len(result)
     result = [x for x in result if x != ['']]
-
+    len_after = len(result)
+    print(f"Before {len_before} and after {len_after}, diff -> {len_before-len_after}")
     models.make_fasttext_model(result, fasttext_file=args.model_path)
 
 
@@ -245,8 +247,7 @@ def parse_agrs():
     parser.add_argument('-mptest', dest='model_path_test', type=str,
                         help='Destination of model for cross-lingual classification for test.')
     parser.add_argument('-mt', dest='model_type', type=str,
-                        help="Type of model. 'ft' fasttext model, 'w2v' word2vec model, 'vec' vectors format.",
-                        default='vec')
+                        help="Type of model. 'ft' fasttext model, 'w2v' word2vec model, 'vec' vectors format.")
     parser.add_argument('-rptest', dest='reviews_path_test', type=str,
                         help='Destination of test reviews for classification for test.')
     parser.add_argument('-l', dest='lang', help='Language of train reviews (and test for mono-lingual classification).')
@@ -268,6 +269,8 @@ def parse_agrs():
     else:
         if args.reviews_path is None:
             raise Exception("Reviews path 'reviews_path' must be set.")
+        if args.model_type is None:
+            raise Exception("Model type 'model_type' must be set.")
         if args.lang is None:
             raise Exception("Language 'lang' must be set.")
         if args.action == 'cross':
@@ -277,10 +280,12 @@ def parse_agrs():
                 raise Exception("Reviews path for test 'reviews_path_test' must be set.")
             if args.lang_test is None:
                 raise Exception("Language for test 'lang_test' must be set.")
-        elif args.action == 'monotest':
+        elif args.action == 'monotest' or args.action != 'translate':
             if args.reviews_path_test is None:
                 raise Exception("Reviews path for test 'reviews_path_test' must be set.")
-        elif args.action != 'mono' and args.action != 'translate':
+            if args.lang_test is None:
+                raise Exception("Language for test 'lang_test' must be set.")
+        elif args.action != 'mono':
             raise Exception(
                 "Wrong argument for action. Action of application. 'mono' mono-lingual classification, 'cross' "
                 "cross-lingual classification and 'model' create model to folder "
@@ -347,9 +352,11 @@ def load_models_and_trans_matrix(args):
     else:
         model_filename_train = args.model_path
         vec_model_train = KeyedVectors.load(model_filename_train)
+        vec_model_train = vec_model_train.wv
         if args.action == 'cross':
             model_filename_test = args.model_path_test
-            vec_model_test = vec_model_train = KeyedVectors.load(model_filename_test)
+            vec_model_test = KeyedVectors.load(model_filename_test)
+            vec_model_test = vec_model_test.wv
             trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test)
         else:
             vec_model_test = vec_model_train
@@ -389,7 +396,7 @@ def main():
 
         reviews_test_df = reviews_test_df[reviews_test_df['tokens'].apply(lambda x: x != [''])]
 
-    reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1", nrows=100)
+    reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
     reviews_df = reviews_df.dropna(thresh=4)
 
     # util.output("Columns in the original dataset:\n")
