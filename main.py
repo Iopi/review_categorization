@@ -47,6 +47,8 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
 
     df_test = None
     for category_name in categories:
+        if category_name != "General" and category_name != "Staff" and category_name != "Speed":
+            continue
         start_time_class = time.time()
 
         util.output("Classification sentiment " + category_name)
@@ -333,7 +335,7 @@ def classification_sentiments_negative(reviews_df, reviews_test_df, classes, arg
         classification_sentiments(temp_data, classes, True, args, model_tuple)
 
 
-def load_models_and_trans_matrix(args):
+def load_models_and_trans_matrix(args, trans_method, filename):
     model_filename_train = None
     vector_filename_train = None
     model_filename_test = None
@@ -346,7 +348,7 @@ def load_models_and_trans_matrix(args):
         if args.action == 'cross':
             vector_filename_test = args.model_path_test
             vec_model_test = KeyedVectors.load_word2vec_format(vector_filename_test, binary=False)
-            trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test)
+            trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_method, filename)
         else:
             vec_model_test = vec_model_train
     else:
@@ -357,7 +359,7 @@ def load_models_and_trans_matrix(args):
             model_filename_test = args.model_path_test
             vec_model_test = KeyedVectors.load(model_filename_test)
             vec_model_test = vec_model_test.wv
-            trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test)
+            trans_matrix = transformation.get_trans_matrix(vec_model_train, vec_model_test, args.lang, args.lang_test, trans_method, filename)
         else:
             vec_model_test = vec_model_train
 
@@ -415,23 +417,28 @@ def main():
     preprocessing_methods.remove_bad_words(reviews_df['tokens'], args.lang)
     reviews_df = reviews_df[reviews_df['tokens'].apply(lambda x: x != [''])]
 
-    # load models and compute transform matrix if cross-lingual
-    model_tuple = load_models_and_trans_matrix(args)
-
     classes = reviews_df.columns[1:10]
 
-    classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
-    classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple)
-    # classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple)
+    # load models and compute transform matrix if cross-lingual
+    filenames = []
+    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}.txt")
+    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}.0-5000m.txt")
+    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}.5000-6500m.txt")
+    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}m.txt")
 
-    # temp_data = top_data_df.copy()
-    # # neutral 0, positive 1 and negative 2
-    # map_sentiment(temp_data)
-    # classification_sentiments(temp_data, classes, False)
+    trans_methods = []
+    trans_methods.append("orto1")
+    trans_methods.append("orto2")
+    trans_methods.append("regr1")
+    trans_methods.append("regr2")
 
-    # map_sentiment_annotate(top_data_df)
-    # map_sentiment(top_data_df)
+    for filename in filenames:
+        for trans_method in trans_methods:
+            print(f"{trans_method} , {filename}")
+            model_tuple = load_models_and_trans_matrix(args, trans_method, filename)
 
+            classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
+            classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple)
 
 if __name__ == "__main__":
     main()
