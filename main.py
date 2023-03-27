@@ -419,26 +419,10 @@ def main():
 
     classes = reviews_df.columns[1:10]
 
-    # load models and compute transform matrix if cross-lingual
-    filenames = []
-    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}.txt")
-    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}.0-5000m.txt")
-    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}.5000-6500m.txt")
-    filenames.append(constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}m.txt")
+    model_tuple = load_models_and_trans_matrix(args, trans_method, filename)
 
-    trans_methods = []
-    trans_methods.append("orto1")
-    trans_methods.append("orto2")
-    trans_methods.append("regr1")
-    trans_methods.append("regr2")
-
-    for filename in filenames:
-        for trans_method in trans_methods:
-            print(f"{trans_method} , {filename}")
-            model_tuple = load_models_and_trans_matrix(args, trans_method, filename)
-
-            classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
-            classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple)
+    classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
+    classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple)
 
 if __name__ == "__main__":
     main()
