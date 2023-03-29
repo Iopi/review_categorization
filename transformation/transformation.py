@@ -11,7 +11,7 @@ def cosine_similarity(vec_a, vec_b):
 
 
 def eval_similarity(target_model, source_model, target_lang, source_lang, trans_matrix):
-    filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}.txt"
+    filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}_muj.txt"
     if not os.path.exists(filename):
         raise Exception(f"Dictionary {filename} not found.")
 
