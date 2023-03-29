@@ -175,3 +175,17 @@ def print_similarity(vec_model_train, param):
     print(param)
     ms = vec_model_train.most_similar(param)
     print(ms)
+
+
+def remove_duplicates(filename):
+    with open(filename, 'r', encoding="utf-8") as f:
+        words = f.readlines()
+        len_before = len(words)
+        words = list(set(words))
+        len_after = len(words)
+        print(f"Removed duplicates {len_before - len_after}")
+
+    with open(filename, 'w') as f:
+        f.writelines(words)
+
+

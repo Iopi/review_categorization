@@ -122,7 +122,7 @@ def get_rank_id_annotated(sentiment):
 def get_rank_id_positive(sentiment):
     if sentiment == "Positive":
         return 1
-    elif sentiment == "Negative": # or sentiment == "Neutral":
+    elif sentiment == "Negative":  # or sentiment == "Neutral":
         return 0
     else:
         return 2
@@ -131,7 +131,7 @@ def get_rank_id_positive(sentiment):
 def get_rank_id_negative(sentiment):
     if sentiment == "Negative":
         return 1
-    elif sentiment == "Positive": # or sentiment == "Neutral":
+    elif sentiment == "Positive":  # or sentiment == "Neutral":
         return 0
     else:
         return 2
@@ -247,7 +247,6 @@ def get_translate_text(path, lang_from, lang_to):
 
 
 def lower_split(top_data_df, lang, check_lang=False):
-
     # top_data_df['lower_split'] = top_data_df['Text'].str.lower()
     lost = 0
     success = 0
@@ -286,12 +285,14 @@ def split_line(line, lang):
         line = remove_diacritics_cs(line)
     elif lang == 'de':
         line = remove_diacritics_de(line)
-        pass
     # line = re.sub('([.,!?()])', r' \1 ', line) # odsazeni punktace
-    line = re.sub(r'[.,"\'-?:!;]', ' ', line)  # smazani punktace a nechtenych symbolu
+    # line = re.sub(r'[.,’"\'-?:!;]', ' ', line)  # smazani punktace a nechtenych symbolu
+    # line = re.sub(r"[-']+", '', line)
+    line = re.sub(r'[’!-?]', '', line)  # smazani punktace a nechtenych symbolu
     line = re.sub('\s{2,}', ' ', line)  # sjednoceni mezer
 
     return line.rstrip()
+
 
 def remove_diacritics_de(sentence):
     old_symbols = "äöü"
@@ -304,6 +305,7 @@ def remove_diacritics_de(sentence):
 
     return sentence
 
+
 def remove_diacritics_cs(sentence):
     old_symbols = "áčďéěíňóřšťúůýž"
     new_symbols = "acdeeinorstuuyz"
@@ -314,3 +316,15 @@ def remove_diacritics_cs(sentence):
     return sentence
 
 
+def remove_diacritics_from_file(filename, langs):
+    with open(filename, 'r', encoding="utf-8") as f:
+        for lang in langs:
+            if lang == 'cs':
+                lines = [remove_diacritics_cs(line) for line in f]
+            elif lang == 'de':
+                lines = [remove_diacritics_de(line) for line in f]
+
+    with open(filename, 'w', encoding="utf-8") as f:
+        f.writelines(lines)
+
+    print(f"Removed diacritics from file {filename}")

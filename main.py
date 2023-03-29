@@ -368,6 +368,8 @@ def load_models_and_trans_matrix(args, trans_method, filename):
 
 
 def main():
+    line = preprocessing_methods.split_line("koupim-li i’ve", "de")
+
     args = parse_agrs()
 
     # reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
@@ -382,7 +384,7 @@ def main():
     if args.action == 'model':
         # create_token_stem_model(args)
         create_lower_split_model(args)
-        # create_unsup_lower_split_model(args)
+        create_unsup_lower_split_model(args)
         exit(0)
     elif args.action == 'cross' or args.action == 'translate' or args.action == 'monotest':
         reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1")
@@ -403,13 +405,8 @@ def main():
 
     # util.output("Columns in the original dataset:\n")
     # util.output(top_data_df.columns)
-
-    # Removing the stop words
-    # preprocessing.remove_stopwords()
-    #
     # Tokenize the text column to get the new column 'tokenized_text'
     # preprocessing_methods.tokenization(reviews_df)
-
     # Get the stemmed_tokens
     # preprocessing_methods.stemming(reviews_df, args.lang)
 
@@ -419,6 +416,7 @@ def main():
 
     classes = reviews_df.columns[1:10]
 
+    trans_method, filename = None, None
     model_tuple = load_models_and_trans_matrix(args, trans_method, filename)
 
     classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
