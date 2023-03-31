@@ -47,8 +47,6 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
 
     df_test = None
     for category_name in categories:
-        if category_name != "General" and category_name != "Staff" and category_name != "Speed":
-            continue
         start_time_class = time.time()
 
         util.output("Classification sentiment " + category_name)

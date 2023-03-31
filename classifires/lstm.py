@@ -15,7 +15,7 @@ from vector_model import models
 
 
 class LongShortTermMemory(nn.Module):
-    def __init__(self, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename_train=None,
+    def __init__(self, device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename_train=None,
                  vector_filename_train=None, model_filename_test=None, vector_filename_test=None, trans_matrix=None):
         super(LongShortTermMemory, self).__init__()
 
@@ -65,7 +65,7 @@ class LongShortTermMemory(nn.Module):
         self.sig = nn.Sigmoid()
         self.sig2 = nn.Softmax()
 
-        self.trans_matrix = None if trans_matrix is None else torch.from_numpy(trans_matrix).float().to('cuda')
+        self.trans_matrix = None if trans_matrix is None else torch.from_numpy(trans_matrix).float().to(device)
 
     def forward(self, x, hidden, train_input):
         batch_size = x.size(0)
@@ -132,7 +132,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     output_dim = 3
     hidden_dim = 256
 
-    lstm_model = LongShortTermMemory(no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
+    lstm_model = LongShortTermMemory(device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
                                      model_filename_train=model_filename_train, vector_filename_train=vector_filename_train,
                                      model_filename_test=model_filename_test, vector_filename_test=vector_filename_test,
                                      trans_matrix=trans_matrix)
