@@ -314,6 +314,8 @@ class Ui_MainWindow(object):
         classifier_method = "lstm"
         self.classification_process(classifier_method, train_reviews, trans_matrix, target_model, source_model,
                                     sent_language, target_language, words)
+        self.label_3.setText(f"All done")
+        self.label_3.repaint()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -398,12 +400,11 @@ class Ui_MainWindow(object):
         max_sen_len = train_reviews.tokens.map(len).max()
         if len(words) > max_sen_len:
             self.label_3.setText(
-                f"COunt of sentence words after preprocessing ({len(words)}) can not be higher then {max_sen_len}.")
+                f"Count of sentence words after preprocessing ({len(words)}) can not be higher then {max_sen_len}.")
             self.label_3.repaint()
             return
 
-        for category in self.classifiers[classifier_method].categories:
-            category_name = constants.CATEGORIES[index]
+        for category_name, value in self.classifiers[classifier_method].categories.items():
             if category['existence'] is None:
                 self.label_3.setText(f"Training {classifier_method} - existence for category {category_name}...")
                 self.label_3.repaint()

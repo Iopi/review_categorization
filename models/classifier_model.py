@@ -13,8 +13,8 @@ class Classifier:
     def prepare_categories(self):
         for category in constants.CATEGORIES:
             self.categories[category] = dict()
-            self.categories['existence'] = None
-            self.categories['sentiment'] = None
+            self.categories[category]['existence'] = None
+            self.categories[category]['sentiment'] = None
 
     def train_model(self, classifier_method, train_reviews, trans_matrix, target_model, device, target_lang,
                     source_lang, category_name, max_sen_len):
