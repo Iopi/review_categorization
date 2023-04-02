@@ -11,7 +11,7 @@ import util
 from classifires import lstm
 from preprocessing import preprocessing_methods
 from transformation import transformation
-from vector_model import models
+from models import model_methods
 
 from nltk.corpus import stopwords
 
@@ -218,7 +218,7 @@ def create_lower_split_model(args):
     result = [x for x in result if x != ['']]
     len_after = len(result)
     print(f"Before {len_before} and after {len_after}, diff -> {len_before-len_after}")
-    models.make_fasttext_model(result, fasttext_file=args.model_path)
+    model_methods.make_fasttext_model(result, fasttext_file=args.model_path)
 
 
 def create_token_stem_model(args):
@@ -233,7 +233,7 @@ def create_token_stem_model(args):
     # creating model
     # models.make_word2vec_model(top_data_df, padding=False)
     # models.make_word2vec_model(top_data_df, padding=True)
-    models.make_fasttext_model(top_data_df['tokens'], fasttext_file=args.model_path)
+    model_methods.make_fasttext_model(top_data_df['tokens'], fasttext_file=args.model_path)
 
 
 def parse_agrs():
@@ -261,31 +261,31 @@ def parse_agrs():
     util.output(args)
 
     if args.model_path is None:
-        raise Exception("Model path 'model_path' must be set.")
+        util.exception("Model path 'model_path' must be set.")
     if args.action == 'model':
         if args.feed_path is None:
-            raise Exception("Feed path 'feed_path' must be set.")
+            util.exception("Feed path 'feed_path' must be set.")
     else:
         if args.reviews_path is None:
-            raise Exception("Reviews path 'reviews_path' must be set.")
+            util.exception("Reviews path 'reviews_path' must be set.")
         if args.model_type is None:
-            raise Exception("Model type 'model_type' must be set.")
+            util.exception("Model type 'model_type' must be set.")
         if args.lang is None:
-            raise Exception("Language 'lang' must be set.")
+            util.exception("Language 'lang' must be set.")
         if args.action == 'cross':
             if args.model_path_test is None:
-                raise Exception("Model path for test 'model_path_test' must be set.")
+                util.exception("Model path for test 'model_path_test' must be set.")
             if args.reviews_path_test is None:
-                raise Exception("Reviews path for test 'reviews_path_test' must be set.")
+                util.exception("Reviews path for test 'reviews_path_test' must be set.")
             if args.lang_test is None:
-                raise Exception("Language for test 'lang_test' must be set.")
+                util.exception("Language for test 'lang_test' must be set.")
         elif args.action == 'monotest' or args.action == 'translate':
             if args.reviews_path_test is None:
-                raise Exception("Reviews path for test 'reviews_path_test' must be set.")
+                util.exception("Reviews path for test 'reviews_path_test' must be set.")
             if args.lang_test is None:
-                raise Exception("Language for test 'lang_test' must be set.")
+                util.exception("Language for test 'lang_test' must be set.")
         elif args.action != 'mono':
-            raise Exception(
+            util.exception(
                 "Wrong argument for action. Action of application. 'mono' mono-lingual classification, 'cross' "
                 "cross-lingual classification and 'model' create model to folder "
                 "added to 'model_filename' destination.")
@@ -297,10 +297,10 @@ def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, ar
     # annotated 1, not annotated 0
     util.output("Annotated 1, not annotated 0")
     temp_data = reviews_df.copy()
-    preprocessing_methods.map_sentiment_annotated(temp_data)
+    preprocessing_methods.map_annotated(temp_data)
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
-        preprocessing_methods.map_sentiment_annotated(temp_data_test)
+        preprocessing_methods.map_annotated(temp_data_test)
         classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
     else:
         classification_sentiments(temp_data, classes, True, args, model_tuple)
@@ -310,10 +310,10 @@ def classification_sentiments_positive(reviews_df, reviews_test_df, classes, arg
     # positive 1, negative 0
     util.output("Positive 1, negative 0")
     temp_data = reviews_df.copy()
-    preprocessing_methods.map_sentiment_positive(temp_data)
+    preprocessing_methods.map_sentiment(temp_data)
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
-        preprocessing_methods.map_sentiment_positive(temp_data_test)
+        preprocessing_methods.map_sentiment(temp_data_test)
         classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
     else:
         classification_sentiments(temp_data, classes, True, args, model_tuple)
@@ -366,13 +366,6 @@ def load_models_and_trans_matrix(args, trans_method, filename):
 
 def main():
     args = parse_agrs()
-
-    # reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
-    # reviews_df = reviews_df.dropna(thresh=4)
-    # reviews_df = reviews_df.sample(frac=1)
-    # reviews_test_df = reviews_df.iloc[1000:, :]
-    # reviews_df = reviews_df.iloc[:1000, :]
-    # preprocessing_methods.translate_data(reviews_test_df, args.lang, args.lang_test)
 
     reviews_test_df = None
     # only creating model

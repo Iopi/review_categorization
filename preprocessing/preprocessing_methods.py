@@ -17,8 +17,6 @@ from gensim.utils import simple_preprocess
 from gensim.parsing.porter import PorterStemmer
 from langdetect import detect, detect_langs
 
-from vector_model import models
-
 
 def remove_bad_words(sentences, lang):
     """
@@ -31,7 +29,7 @@ def remove_bad_words(sentences, lang):
     elif lang == 'de':
         filename = constants.SW_FOLDER + "stop_words_german.txt"
     else:
-        raise Exception("Unknown language.")
+        util.exception("Unknown language.")
 
     with open(filename, encoding='utf-8') as f:
         stop_words = [line.strip() for line in f.readlines()]
@@ -70,7 +68,7 @@ def tokenization(top_data_df, lang=None):
         false_count = 0
         if len(values) != 2:
             if values[0] == False:
-                raise Exception("All reviews have bad content.")
+                util.exception("All reviews have bad content.")
             true_count = counts[0]
         else:
             if values[0] == False:
@@ -148,7 +146,7 @@ def get_rank_id(sentiment):
         return 3
 
 
-def map_sentiment_annotated(top_data_df):
+def map_annotated(top_data_df):
     top_data_df['General'] = [get_rank_id_annotated(x) for x in top_data_df['General']]
     top_data_df['Food'] = [get_rank_id_annotated(x) for x in top_data_df['Food']]
     top_data_df['Drink'] = [get_rank_id_annotated(x) for x in top_data_df['Drink']]
@@ -161,7 +159,7 @@ def map_sentiment_annotated(top_data_df):
     top_data_df['Other'] = [get_rank_id_annotated(x) for x in top_data_df['Other']]
 
 
-def map_sentiment_positive(top_data_df):
+def map_sentiment(top_data_df):
     top_data_df['General'] = [get_rank_id_positive(x) for x in top_data_df['General']]
     top_data_df['Food'] = [get_rank_id_positive(x) for x in top_data_df['Food']]
     top_data_df['Drink'] = [get_rank_id_positive(x) for x in top_data_df['Drink']]
@@ -187,7 +185,7 @@ def map_sentiment_negative(top_data_df):
     top_data_df['Other'] = [get_rank_id_negative(x) for x in top_data_df['Other']]
 
 
-def map_sentiment(top_data_df):
+def map_sentiment_old(top_data_df):
     top_data_df['General'] = [get_rank_id(x) for x in top_data_df['General']]
     top_data_df['Food'] = [get_rank_id(x) for x in top_data_df['Food']]
     top_data_df['Drink'] = [get_rank_id(x) for x in top_data_df['Drink']]
@@ -232,7 +230,6 @@ def make_target(label, device):
 def translate_data(data_df, lang_from, lang_to):
     model = EasyNMT('opus-mt')
     data_df['Text'] = [model.translate(x, target_lang=lang_to, source_lang=lang_from) for x in data_df['Text']]
-    # print(data_df['Text'].head())
 
 
 def get_translate_text(path, lang_from, lang_to):

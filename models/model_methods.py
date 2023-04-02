@@ -186,7 +186,7 @@ def load_w2vec_model(data_df_ranked, word2vec_file):
     elif os.path.exists(word2vec_file):
         w2v_model = gensim.models.KeyedVectors.load(word2vec_file)
     else:
-        raise Exception("Word2vec model not found")
+        util.exception("Word2vec model not found")
 
     return w2v_model, word2vec_file
 

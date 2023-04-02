@@ -11,11 +11,12 @@ from torch.utils.data import TensorDataset, DataLoader
 
 import constants
 import util
-from vector_model import models
+from models import model_methods
 
 
 class LongShortTermMemory(nn.Module):
-    def __init__(self, device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5, model_filename_train=None,
+    def __init__(self, device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
+                 model_filename_train=None,
                  vector_filename_train=None, model_filename_test=None, vector_filename_test=None, trans_matrix=None):
         super(LongShortTermMemory, self).__init__()
 
@@ -116,7 +117,7 @@ class LongShortTermMemory(nn.Module):
 def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary=False,
                   batch_size=1, model_filename_train=None, vector_filename_train=None, model_filename_test=None,
                   vector_filename_test=None):
-    X_train = [models.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train]
+    X_train = [model_methods.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train]
     X_train = np.array(X_train)
     Y_train = Y_train_sentiment.to_numpy()
     X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.25,
@@ -133,7 +134,8 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     hidden_dim = 256
 
     lstm_model = LongShortTermMemory(device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
-                                     model_filename_train=model_filename_train, vector_filename_train=vector_filename_train,
+                                     model_filename_train=model_filename_train,
+                                     vector_filename_train=vector_filename_train,
                                      model_filename_test=model_filename_test, vector_filename_test=vector_filename_test,
                                      trans_matrix=trans_matrix)
 
@@ -248,20 +250,6 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     return lstm_model
 
 
-# def testing_LSTM_2():
-#     batch_acc = []
-#     for batch_idx, batch in enumerate(test_dl):
-#         input = batch[0].to(device)
-#         target = batch[1].to(device)
-#
-#         optimizer.zero_grad()
-#         with torch.set_grad_enabled(False):
-#             out, hidden = model(input, (h0, c0))
-#             _, preds = torch.max(out, 1)
-#             preds = preds.to("cpu").tolist()
-#             batch_acc.append(accuracy_score(preds, target.tolist()))
-#
-#     sum(batch_acc) / len(batch_acc)
 def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment):
     # bow_cnn_predictions = []
     # original_lables_cnn_bow = []
@@ -297,7 +285,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
             # print(text)
             # tokens = simple_preprocess(text, deacc=True)
             # tags = [czech_stemmer.cz_stem(word) for word in tokens]
-            vec = models.make_w2vec_vector(vec_model_test, tags, max_sen_len)
+            vec = model_methods.make_w2vec_vector(vec_model_test, tags, max_sen_len)
 
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)
@@ -318,3 +306,19 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
             # print(f'Actual sentiment is  : {Y_test_sentiment[i]}')
             i += 1
     util.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
+
+
+def classifie_LSTM(lstm_model, source_model, device, max_sen_len, words):
+    lstm_model.eval()
+    with torch.no_grad():
+        vec = model_methods.make_w2vec_vector(source_model, words, max_sen_len)
+
+        inputs = np.expand_dims(vec, axis=0)
+        torch.from_numpy(inputs).float().to(device)
+        inputs = torch.from_numpy(inputs).to(device)
+        batch_size = 1
+        h = lstm_model.init_hidden(batch_size, device)
+        h = tuple([each.data for each in h])
+        output, h = lstm_model(inputs, h, False)
+
+        return output

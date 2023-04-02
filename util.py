@@ -14,7 +14,7 @@ import constants
 import util
 
 # now we will Create and configure logger
-logging.basicConfig(filename="std.log",
+logging.basicConfig(filename="log.log",
                     format='%(message)s',
                     filemode='w')
 # logging.basicConfig(filename="std.log",
@@ -33,6 +33,11 @@ logger.setLevel(logging.DEBUG)
 def output(message):
     logger.info(message)
     print(message)
+
+
+def exception(message):
+    logger.exception(f"\nException: {message}")
+    raise Exception(message)
 
 
 def plot_distribution(top_data_df, sentiment):
@@ -187,5 +192,3 @@ def remove_duplicates(filename):
 
     with open(filename, 'w') as f:
         f.writelines(words)
-
-

@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 import constants
-from sklearn.cross_decomposition import CCA
+import util
 
 
 def cosine_similarity(vec_a, vec_b):
@@ -13,7 +13,7 @@ def cosine_similarity(vec_a, vec_b):
 def eval_similarity(target_model, source_model, target_lang, source_lang, trans_matrix):
     filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}_muj.txt"
     if not os.path.exists(filename):
-        raise Exception(f"Dictionary {filename} not found.")
+        util.exception(f"Dictionary {filename} not found.")
 
     sum = 0
     i = 0
@@ -176,6 +176,45 @@ def compute_transform_matrix_orthogonal2(target_model, source_model, filename):
 
     return trans_matrix.T
 
+def compute_transform_matrix_procrustes_analysis(target_model, source_model, filename):
+    with open(filename, encoding="utf-8") as f:
+        matrix_t = None
+        matrix_s = None
+        for line in f:
+            line = line.rstrip()
+            wt, ws = line.split()
+            try:
+                vec_t = target_model[wt]
+                vec_s = source_model[ws]
+            except:
+                continue
+
+            if matrix_t is None:
+                matrix_t = vec_t
+                matrix_s = vec_s
+            else:
+                matrix_t = np.vstack((matrix_t, vec_t))
+                matrix_s = np.vstack((matrix_s, vec_s))
+
+        X_mean = np.mean(matrix_t, axis=0)
+        Y_mean = np.mean(matrix_s, axis=0)
+        X_centered = matrix_t - X_mean
+        Y_centered = matrix_s - Y_mean
+
+        # Singular value decomposition (SVD)
+        U, _, VT = np.linalg.svd(Y_centered.T @ X_centered)
+
+        # Výpočet transformační matice
+        Z = U @ VT
+
+        x = np.dot(Z, vec_s)
+        print(cosine_similarity(x, vec_t))
+
+        x = np.dot(Z.T, vec_s)
+        print(cosine_similarity(x, vec_t))
+
+    return Z.T
+
 
 
 
@@ -183,7 +222,7 @@ def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, 
     # filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}.0-5000m.txt"
     # print(filename)
     # if not os.path.exists(filename):
-    #     raise Exception(f"Dictionary {filename} not found.")
+    #     util.exception(f"Dictionary {filename} not found.")
     #
     # print("orto1")
     # trans_matrix = compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, filename)
@@ -201,7 +240,7 @@ def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, 
     # filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}.5000-6500m.txt"
     # print(filename)
     # if not os.path.exists(filename):
-    #     raise Exception(f"Dictionary {filename} not found.")
+    #     util.exception(f"Dictionary {filename} not found.")
     #
     # print("orto1")
     # trans_matrix = compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, filename)
@@ -220,7 +259,7 @@ def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, 
     # filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}m.txt"
     # print(filename)
     # if not os.path.exists(filename):
-    #     raise Exception(f"Dictionary {filename} not found.")
+    #     util.exception(f"Dictionary {filename} not found.")
     #
     # print("orto1")
     # trans_matrix = compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, filename)
@@ -239,7 +278,7 @@ def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, 
     # filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}.txt"
     # print(filename)
     # if not os.path.exists(filename):
-    #     raise Exception(f"Dictionary {filename} not found.")
+    #     util.exception(f"Dictionary {filename} not found.")
     #
     # print("orto1")
     # trans_matrix = compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, filename)
@@ -263,7 +302,7 @@ def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, 
     elif trans_method == "regr2":
         trans_matrix = compute_transform_matrix_regression2(vec_model_train, vec_model_test, filename)
     else:
-        exit(9)
+        util.exception(f"Unknown transform matrix method {trans_method}")
 
     eval_similarity(vec_model_train, vec_model_test, target_lang, source_lang, trans_matrix)
 
