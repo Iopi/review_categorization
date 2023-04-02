@@ -313,7 +313,7 @@ class Ui_MainWindow(object):
 
         classifier_method = "lstm"
         self.classification_process(classifier_method, train_reviews, trans_matrix, target_model, source_model,
-                                    sent_language, target_language, words)
+                                    Language[sent_language].value, Language[target_language].value, words)
         self.label_3.setText(f"All done")
         self.label_3.repaint()
 
@@ -415,7 +415,7 @@ class Ui_MainWindow(object):
                                                                                           self.device, sent_language,
                                                                                           target_language,
                                                                                           category_name,
-                                                                                          max_sen_len)
+                                                                                          max_sen_len, self.models)
             self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
             self.label_3.repaint()
             result = self.classifiers[classifier_method].test_model(classifier_method,
@@ -437,7 +437,7 @@ class Ui_MainWindow(object):
                                                                                               sent_language,
                                                                                               target_language,
                                                                                               category_name,
-                                                                                              max_sen_len)
+                                                                                              max_sen_len, self.models)
                 self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
                 self.label_3.repaint()
                 result = self.classifiers[classifier_method].test_model(classifier_method,
@@ -445,13 +445,16 @@ class Ui_MainWindow(object):
                                                                         self.device, max_sen_len, words)
 
                 if result >= 0.5:
-                    self.result_table.item(index, 0).setText(Sentiment.POSITIVE.value)
-                    self.result_table.item(index, 1).setText(result)
+                    self.result_table.item(0, index).setText(Sentiment.POSITIVE.value)
+                    self.result_table.item(1, index).setText(str(round(result, 2)))
                 else:
-                    self.result_table.item(index, 0).setText(Sentiment.NEGATIVE.value)
-                    self.result_table.item(index, 1).setText(1 - result)
+                    self.result_table.item(0, index).setText(Sentiment.NEGATIVE.value)
+                    self.result_table.item(1, index).setText(str(round(1 - result, 2)))
                 self.result_table.repaint()
-
+            else:
+                self.result_table.item(0, index).setText("x")
+                self.result_table.item(1, index).setText("x")
+                self.result_table.repaint()
             index += 1
 
     def clean_table(self):

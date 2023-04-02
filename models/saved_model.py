@@ -28,21 +28,21 @@ class SavedModels:
             if self.czech_model is None:
                 self.czech_model = KeyedVectors.load(constants.DEFAULT_VEC_MODEL_CS)
                 self.czech_model = self.czech_model.wv
-                self.czech_model_filename =constants.DEFAULT_VEC_MODEL_CS
+                self.czech_model_filename = constants.DEFAULT_VEC_MODEL_CS
             return self.czech_model
 
         elif lang == Language.ENGLISH.value:
             if self.english_model is None:
                 self.english_model = KeyedVectors.load(constants.DEFAULT_VEC_MODEL_EN)
                 self.english_model = self.english_model.wv
-                self.english_model_filename =constants.DEFAULT_VEC_MODEL_EN
+                self.english_model_filename = constants.DEFAULT_VEC_MODEL_EN
                 return self.english_model
 
         elif lang == Language.GERMAN.value:
             if self.german_model is None:
                 self.german_model = KeyedVectors.load(constants.DEFAULT_VEC_MODEL_DE)
                 self.german_model = self.german_model.wv
-                self.german_model_filename =constants.DEFAULT_VEC_MODEL_DE
+                self.german_model_filename = constants.DEFAULT_VEC_MODEL_DE
                 return self.german_model
 
         else:
@@ -101,4 +101,17 @@ class SavedModels:
                 self.reviews_de = self.reviews_de[self.reviews_de['tokens'].apply(lambda x: x != [''])]
             return self.reviews_de
 
+    def get_model_filename(self, lang):
+        if lang == Language.CZECH.value:
+            if self.czech_model_filename is not None:
+                return self.czech_model_filename
 
+        if lang == Language.ENGLISH.value:
+            if self.english_model_filename is not None:
+                return self.english_model_filename
+
+        if lang == Language.GERMAN.value:
+            if self.german_model_filename is not None:
+                return self.german_model_filename
+
+        util.exception(f"Model filename for language {lang} not found.")

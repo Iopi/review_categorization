@@ -290,14 +290,12 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)
             inputs = torch.from_numpy(inputs).to(device)
-            batch_size = 1
+            batch_size=1
             h = lstm_model.init_hidden(batch_size, device)
             h = tuple([each.data for each in h])
             output, h = lstm_model(inputs, h, False)
             if output < 0.5:
                 bow_cnn_predictions.append(0)
-            # elif output < 0.9999:
-            #     bow_cnn_predictions.append(1)
             else:
                 bow_cnn_predictions.append(1)
             # status = "Positive" if output > 0.5 else "Negative"

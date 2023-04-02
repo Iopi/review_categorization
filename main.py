@@ -401,6 +401,7 @@ def main():
     reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df, args.lang)
     preprocessing_methods.remove_bad_words(reviews_df['tokens'], args.lang)
     reviews_df = reviews_df[reviews_df['tokens'].apply(lambda x: x != [''])]
+    reviews_df = reviews_df.head(1400)
 
     classes = reviews_df.columns[1:10]
 
