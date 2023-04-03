@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -39,6 +42,9 @@ class Ui_MainWindow(object):
         self.run_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.run_classification())
         self.run_button.setGeometry(QtCore.QRect(360, 190, 111, 41))
         self.run_button.setObjectName("run_button")
+        self.save_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.save_classifier())
+        self.save_button.setGeometry(QtCore.QRect(500, 190, 80, 41))
+        self.save_button.setObjectName("save_button")
         self.result_table = QtWidgets.QTableWidget(self.centralwidget)
         self.result_table.setEnabled(False)
         self.result_table.setGeometry(QtCore.QRect(80, 290, 664, 86))
@@ -317,6 +323,15 @@ class Ui_MainWindow(object):
         self.label_3.setText(f"All done")
         self.label_3.repaint()
 
+    def save_classifier(self):
+        classifier_method = "lstm"
+        with open(constants.CLASSIFIER_LSTM_CS, 'wb') as f:
+            pickle.dump(self.classifiers[classifier_method], f)
+
+    def load_classifier(self, classifier_method):
+        with open(constants.CLASSIFIER_LSTM_CS, 'rb') as f:
+            self.classifiers[classifier_method] = pickle.load(f)
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
@@ -326,6 +341,7 @@ class Ui_MainWindow(object):
         self.language_combo_box.setItemText(2, _translate("MainWindow", "german"))
         self.label_2.setText(_translate("MainWindow", "Language of sentence:"))
         self.run_button.setText(_translate("MainWindow", "Run"))
+        self.save_button.setText(_translate("MainWindow", "Save"))
         item = self.result_table.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "Sentiment"))
         item = self.result_table.verticalHeaderItem(1)
@@ -391,8 +407,16 @@ class Ui_MainWindow(object):
 
     def prepare_classifiers(self):
         self.classifiers = dict()
-        self.classifiers["lstm"] = Classifier("lstm")
-        self.classifiers["cnn"] = Classifier("cnn")
+        if os.path.exists(constants.CLASSIFIER_LSTM_CS):
+            self.load_classifier("lstm")
+        else:
+            self.classifiers["lstm"] = Classifier("lstm")
+
+        if os.path.exists(constants.CLASSIFIER_CNN_CS):
+            self.load_classifier("cnn")
+        else:
+            self.classifiers["cnn"] = Classifier("cnn")
+
 
     def classification_process(self, classifier_method, train_reviews, trans_matrix, target_model, source_model,
                                sent_language, target_language, words):

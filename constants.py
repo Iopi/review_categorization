@@ -24,3 +24,6 @@ DEFAULT_REVIEWS_CS = 'data/review/reviews_cs.xlsx'
 DEFAULT_REVIEWS_EN = 'data/review/reviews_en.xlsx'
 DEFAULT_REVIEWS_DE = 'data/review/reviews_de.xlsx'
 
+CLASSIFIER_LSTM_CS = 'data/saved_classifiers/lstm_models.bin'
+CLASSIFIER_CNN_CS = 'data/saved_classifiers/cnn_models.bin'
+
