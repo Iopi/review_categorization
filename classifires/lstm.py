@@ -143,7 +143,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     lstm_model.to(device)
 
     # loss and optimization functions
-    lr = 0.001
+    lr = 0.001     # default 0.001
     # if binary:
     #     criterion = nn.BCELoss()
     # else:

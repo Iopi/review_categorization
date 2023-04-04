@@ -57,15 +57,16 @@ def make_word2vec_model(top_data_df_small, padding=True, sg=1, min_count=1, vect
 
 
 def make_word2vec_vector_cnn(w2v_model, sentence, device, max_sen_len):
-    padding_idx = w2v_model.wv.key_to_index['pad']
+    padding_idx = w2v_model.key_to_index['pad']
+    # padding_idx = w2v_model.wv.key_to_index['pad']
     padded_X = [padding_idx for i in range(max_sen_len)]
     i = 0
     for word in sentence:
-        if word not in w2v_model.wv.key_to_index:
+        if word not in w2v_model.key_to_index:
             padded_X[i] = 0
             # util.output(word)
         else:
-            padded_X[i] = w2v_model.wv.key_to_index[word]
+            padded_X[i] = w2v_model.key_to_index[word]
         i += 1
     return torch.tensor(padded_X, dtype=torch.long, device=device).view(1, -1)
 

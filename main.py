@@ -8,7 +8,7 @@ from langdetect import detect_langs
 
 import constants
 import util
-from classifires import lstm
+from classifires import lstm, cnn
 from preprocessing import preprocessing_methods
 from transformation import transformation
 from models import model_methods
@@ -86,11 +86,12 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
 
         util.compute_majority_class(Y_test)
 
-        # X # LSTM with w2v/fasttext model
         max_sen_len = df_sentiment.tokens.map(len).max()
         if df_test is not None:
             max_sen_len_test = df_test.tokens.map(len).max()
             max_sen_len = max(max_sen_len, max_sen_len_test)
+
+        # X # LSTM with w2v/fasttext model
         lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary,
                                         batch_size=1, model_filename_train=model_filename_train,
                                         vector_filename_train=vector_filename_train,
@@ -99,10 +100,9 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
         lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test)
 
         # 1 # CNN with w2v/fasttext model
-        # max_sen_len = df_sentiment.tokens.map(len).max()
-        # cnn_model = cnn.training_CNN(vec_model, vec_model_file, device, max_sen_len, X_train, Y_train[category_name],
-        #                          binary, padding=True)
-        # cnn.testing_CNN(cnn_model, vec_model_file, vec_model, device, max_sen_len, X_test, Y_test[category_name])
+        # cnn_model = cnn.training_CNN(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
+        #                          binary, padding=True, model_filename_test=model_filename_test)
+        # cnn.testing_CNN(cnn_model, vec_model_test, device, max_sen_len, X_test, Y_test)
 
         # 2 # FFNN
         # Make the dictionary without padding for the basic models
@@ -401,7 +401,6 @@ def main():
     reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df, args.lang)
     preprocessing_methods.remove_bad_words(reviews_df['tokens'], args.lang)
     reviews_df = reviews_df[reviews_df['tokens'].apply(lambda x: x != [''])]
-    reviews_df = reviews_df.head(1400)
 
     classes = reviews_df.columns[1:10]
 

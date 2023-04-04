@@ -282,13 +282,14 @@ def split_line(line, lang):
         line = remove_diacritics_cs(line)
     elif lang == 'de':
         line = remove_diacritics_de(line)
-    # line = re.sub('([.,!?()])', r' \1 ', line) # odsazeni punktace
-    # line = re.sub(r'[.,’"\'-?:!;]', ' ', line)  # smazani punktace a nechtenych symbolu
+    line = re.sub('([.,!?()])', r' \1 ', line) # odsazeni punktace
+    line = re.sub(r'[’\'\-]', '', line)  # smazani punktace a nechtenych symbolu
+    line = re.sub(r'[":;]', ' ', line)  # smazani punktace a nechtenych symbolu
     # line = re.sub(r"[-']+", '', line)
-    line = re.sub(r'[’!-?]', '', line)  # smazani punktace a nechtenych symbolu
+    # line = re.sub(r'[’!-?]', '', line)  # smazani punktace a nechtenych symbolu
     line = re.sub('\s{2,}', ' ', line)  # sjednoceni mezer
 
-    return line.rstrip()
+    return line.lstrip().rstrip()
 
 
 def remove_diacritics_de(sentence):
