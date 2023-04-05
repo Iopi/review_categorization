@@ -7,14 +7,16 @@ from models import saved_model
 class Classifier:
     def __init__(self, name):
         self.name = name
-        self.categories = dict()
-        self.prepare_categories()
+        self.category_models = dict()
+        self.category_models['existence'] = None
+        self.category_models['sentiment'] = None
+        # self.prepare_categories()
 
-    def prepare_categories(self):
-        for category in constants.CATEGORIES:
-            self.categories[category] = dict()
-            self.categories[category]['existence'] = None
-            self.categories[category]['sentiment'] = None
+    # def prepare_categories(self):
+    #     for category in constants.CATEGORIES:
+    #         self.categories[category] = dict()
+    #         self.categories[category]['existence'] = None
+    #         self.categories[category]['sentiment'] = None
 
     def train_model(self, classifier_method, train_reviews, trans_matrix, target_model, device, target_lang,
                     source_lang, category_name, max_sen_len, models):

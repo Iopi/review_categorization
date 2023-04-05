@@ -42,9 +42,9 @@ class Ui_MainWindow(object):
         self.run_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.run_classification())
         self.run_button.setGeometry(QtCore.QRect(360, 190, 111, 41))
         self.run_button.setObjectName("run_button")
-        self.save_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.save_classifier())
-        self.save_button.setGeometry(QtCore.QRect(500, 190, 80, 41))
-        self.save_button.setObjectName("save_button")
+        # self.save_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.save_classifier())
+        # self.save_button.setGeometry(QtCore.QRect(500, 190, 80, 41))
+        # self.save_button.setObjectName("save_button")
         self.result_table = QtWidgets.QTableWidget(self.centralwidget)
         self.result_table.setEnabled(False)
         self.result_table.setGeometry(QtCore.QRect(80, 290, 664, 86))
@@ -275,7 +275,7 @@ class Ui_MainWindow(object):
 
         self.device = util.device_recognition()
         self.models = SavedModels("cs")
-        self.prepare_classifiers()
+        # self.prepare_classifiers()
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -323,14 +323,14 @@ class Ui_MainWindow(object):
         self.label_3.setText(f"All done")
         self.label_3.repaint()
 
-    def save_classifier(self):
-        classifier_method = "lstm"
-        with open(constants.CLASSIFIER_LSTM_CS, 'wb') as f:
-            pickle.dump(self.classifiers[classifier_method], f)
+    def save_classifier(self, filename, classifier):
+        with open(filename, 'wb') as f:
+            pickle.dump(classifier, f)
 
-    def load_classifier(self, classifier_method):
-        with open(constants.CLASSIFIER_LSTM_CS, 'rb') as f:
-            self.classifiers[classifier_method] = pickle.load(f)
+    def load_classifier(self, filename):
+        with open(filename, 'rb') as f:
+            classifier = pickle.load(f)
+        return classifier
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -341,7 +341,7 @@ class Ui_MainWindow(object):
         self.language_combo_box.setItemText(2, _translate("MainWindow", "german"))
         self.label_2.setText(_translate("MainWindow", "Language of sentence:"))
         self.run_button.setText(_translate("MainWindow", "Run"))
-        self.save_button.setText(_translate("MainWindow", "Save"))
+        # self.save_button.setText(_translate("MainWindow", "Save"))
         item = self.result_table.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "Sentiment"))
         item = self.result_table.verticalHeaderItem(1)
@@ -417,6 +417,69 @@ class Ui_MainWindow(object):
         else:
             self.classifiers["cnn"] = Classifier("cnn")
 
+    # def classification_process(self, classifier_method, train_reviews, trans_matrix, target_model, source_model,
+    #                            sent_language, target_language, words):
+    #     index = 0
+    #     max_sen_len = train_reviews.tokens.map(len).max()
+    #     if len(words) > max_sen_len:
+    #         self.label_3.setText(
+    #             f"Count of sentence words after preprocessing ({len(words)}) can not be higher then {max_sen_len}.")
+    #         self.label_3.repaint()
+    #         return
+    #
+    #     for category_name, cat_models in self.classifiers[classifier_method].categories.items():
+    #
+    #         if cat_models['existence'] is None:
+    #             self.label_3.setText(f"Training {classifier_method} - existence for category {category_name}...")
+    #             self.label_3.repaint()
+    #             temp_data = train_reviews.copy()
+    #             preprocessing_methods.map_annotated(temp_data)
+    #             cat_models['existence'] = self.classifiers[classifier_method].train_model(classifier_method, temp_data,
+    #                                                                                       trans_matrix, target_model,
+    #                                                                                       self.device, sent_language,
+    #                                                                                       target_language,
+    #                                                                                       category_name,
+    #                                                                                       max_sen_len, self.models)
+    #         self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
+    #         self.label_3.repaint()
+    #         result = self.classifiers[classifier_method].test_model(classifier_method,
+    #                                                                 cat_models['existence'], source_model, self.device,
+    #                                                                 max_sen_len, words)
+    #
+    #         if result >= 0.0: # 0.5
+    #             if cat_models['sentiment'] is None:
+    #                 self.label_3.setText(f"Training {classifier_method} - sentiment for category {category_name}...")
+    #                 self.label_3.repaint()
+    #                 temp_data = train_reviews.copy()
+    #                 preprocessing_methods.map_sentiment(temp_data)
+    #                 temp_data = temp_data[temp_data[category_name] != 2]
+    #                 cat_models['sentiment'] = self.classifiers[classifier_method].train_model(classifier_method,
+    #                                                                                           temp_data,
+    #                                                                                           trans_matrix,
+    #                                                                                           target_model,
+    #                                                                                           self.device,
+    #                                                                                           sent_language,
+    #                                                                                           target_language,
+    #                                                                                           category_name,
+    #                                                                                           max_sen_len, self.models)
+    #             self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
+    #             self.label_3.repaint()
+    #             result = self.classifiers[classifier_method].test_model(classifier_method,
+    #                                                                     cat_models['sentiment'], source_model,
+    #                                                                     self.device, max_sen_len, words)
+    #
+    #             if result >= 0.5:
+    #                 self.result_table.item(0, index).setText(Sentiment.POSITIVE.value)
+    #                 self.result_table.item(1, index).setText(str(round(result, 2)))
+    #             else:
+    #                 self.result_table.item(0, index).setText(Sentiment.NEGATIVE.value)
+    #                 self.result_table.item(1, index).setText(str(round(1 - result, 2)))
+    #             self.result_table.repaint()
+    #         else:
+    #             self.result_table.item(0, index).setText("x")
+    #             self.result_table.item(1, index).setText("x")
+    #             self.result_table.repaint()
+    #         index += 1
 
     def classification_process(self, classifier_method, train_reviews, trans_matrix, target_model, source_model,
                                sent_language, target_language, words):
@@ -428,45 +491,24 @@ class Ui_MainWindow(object):
             self.label_3.repaint()
             return
 
-        for category_name, cat_models in self.classifiers[classifier_method].categories.items():
-            if cat_models['existence'] is None:
-                self.label_3.setText(f"Training {classifier_method} - existence for category {category_name}...")
-                self.label_3.repaint()
-                temp_data = train_reviews.copy()
-                preprocessing_methods.map_annotated(temp_data)
-                cat_models['existence'] = self.classifiers[classifier_method].train_model(classifier_method, temp_data,
-                                                                                          trans_matrix, target_model,
-                                                                                          self.device, sent_language,
-                                                                                          target_language,
-                                                                                          category_name,
-                                                                                          max_sen_len, self.models)
+        for category_name in constants.CATEGORIES:
+            print(category_name)
+            classifier = self.load_models(classifier_method, category_name, train_reviews, trans_matrix, target_model,
+                                          sent_language, target_language, max_sen_len)
+
             self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
             self.label_3.repaint()
-            result = self.classifiers[classifier_method].test_model(classifier_method,
-                                                                    cat_models['existence'], source_model, self.device,
-                                                                    max_sen_len, words)
+            result = classifier.test_model(classifier_method,
+                                           classifier.category_models['existence'], source_model, self.device,
+                                           max_sen_len, words)
 
-            if result >= 0.5:
-                if cat_models['sentiment'] is None:
-                    self.label_3.setText(f"Training {classifier_method} - sentiment for category {category_name}...")
-                    self.label_3.repaint()
-                    temp_data = train_reviews.copy()
-                    preprocessing_methods.map_sentiment(temp_data)
-                    temp_data = temp_data[temp_data[category_name] != 2]
-                    cat_models['sentiment'] = self.classifiers[classifier_method].train_model(classifier_method,
-                                                                                              temp_data,
-                                                                                              trans_matrix,
-                                                                                              target_model,
-                                                                                              self.device,
-                                                                                              sent_language,
-                                                                                              target_language,
-                                                                                              category_name,
-                                                                                              max_sen_len, self.models)
+            if result >= 0.0:  # 0.5
+
                 self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
                 self.label_3.repaint()
-                result = self.classifiers[classifier_method].test_model(classifier_method,
-                                                                        cat_models['sentiment'], source_model,
-                                                                        self.device, max_sen_len, words)
+                result = classifier.test_model(classifier_method,
+                                               classifier.category_models['sentiment'], source_model,
+                                               self.device, max_sen_len, words)
 
                 if result >= 0.5:
                     self.result_table.item(0, index).setText(Sentiment.POSITIVE.value)
@@ -487,6 +529,51 @@ class Ui_MainWindow(object):
                 item = self.result_table.item(row, col)
                 item.setText("-")
         self.result_table.repaint()
+
+    def load_models(self, classifier_method, category_name, train_reviews, trans_matrix, target_model,
+                    sent_language, target_language, max_sen_len):
+        if classifier_method == "lstm":
+            models_filename = constants.CLASSIFIER_LSTM_CS + category_name + ".bin"
+        elif classifier_method == "cnn":
+            models_filename = constants.CLASSIFIER_CNN_CS + category_name + ".bin"
+        else:
+            util.exception(f"Unknown classifier method {classifier_method}")
+
+        # if exists - load
+        if os.path.exists(models_filename):
+            classifier = self.load_classifier(models_filename)
+
+        # if not - create and save
+        else:
+            self.label_3.setText(f"Training {classifier_method} - existence for category {category_name}...")
+            self.label_3.repaint()
+            temp_data = train_reviews.copy()
+            preprocessing_methods.map_annotated(temp_data)
+            classifier = Classifier(classifier_method)
+            classifier.category_models['existence'] = classifier.train_model(classifier_method, temp_data,
+                                                                             trans_matrix, target_model,
+                                                                             self.device, sent_language,
+                                                                             target_language,
+                                                                             category_name,
+                                                                             max_sen_len, self.models)
+            self.label_3.setText(f"Training {classifier_method} - sentiment for category {category_name}...")
+            self.label_3.repaint()
+            temp_data = train_reviews.copy()
+            preprocessing_methods.map_sentiment(temp_data)
+            temp_data = temp_data[temp_data[category_name] != 2]
+            classifier.category_models['sentiment'] = classifier.train_model(classifier_method,
+                                                                             temp_data,
+                                                                             trans_matrix,
+                                                                             target_model,
+                                                                             self.device,
+                                                                             sent_language,
+                                                                             target_language,
+                                                                             category_name,
+                                                                             max_sen_len, self.models)
+
+            self.save_classifier(models_filename, classifier)
+
+        return classifier
 
 
 if __name__ == "__main__":
