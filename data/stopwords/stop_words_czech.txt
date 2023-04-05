@@ -25,7 +25,6 @@ vam
 jeji
 t
 do
-prede
 tedy
 ni
 behem
@@ -125,7 +124,6 @@ ji
 spolu
 nas
 budes
-jen
 e
 me
 budou
@@ -145,8 +143,6 @@ tomuto
 mame
 svuj
 nad
-snad
-pred
 jine
 cau
 nade
@@ -162,7 +158,6 @@ r
 ted
 tva
 ma
-jinak
 b
 jeste
 chtit
