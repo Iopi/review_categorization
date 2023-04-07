@@ -8,7 +8,7 @@ from langdetect import detect_langs
 
 import constants
 import util
-from classifires import lstm, cnn
+from classifires import lstm, cnn, cnn2
 from preprocessing import preprocessing_methods
 from transformation import transformation
 from models import model_methods
@@ -92,17 +92,20 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
             max_sen_len = max(max_sen_len, max_sen_len_test)
 
         # X # LSTM with w2v/fasttext model
-        lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary,
-                                        batch_size=1, model_filename_train=model_filename_train,
-                                        vector_filename_train=vector_filename_train,
-                                        model_filename_test=model_filename_test,
-                                        vector_filename_test=vector_filename_test)
-        lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test)
+        # lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary,
+        #                                 batch_size=1, model_filename_train=model_filename_train,
+        #                                 vector_filename_train=vector_filename_train,
+        #                                 model_filename_test=model_filename_test,
+        #                                 vector_filename_test=vector_filename_test)
+        # lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test)
+
+        # cnn2.cnn_preocess(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
+        #                          binary, model_filename_test, vec_model_test, X_test, Y_test, padding=True)
 
         # 1 # CNN with w2v/fasttext model
-        # cnn_model = cnn.training_CNN(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
-        #                          binary, padding=True, model_filename_test=model_filename_test)
-        # cnn.testing_CNN(cnn_model, vec_model_test, device, max_sen_len, X_test, Y_test)
+        cnn_model = cnn.training_CNN(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
+                                 binary, padding=True, model_filename_test=model_filename_test)
+        cnn.testing_CNN(cnn_model, vec_model_test, device, max_sen_len, X_test, Y_test)
 
         # 2 # FFNN
         # Make the dictionary without padding for the basic models

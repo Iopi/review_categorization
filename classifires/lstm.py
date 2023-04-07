@@ -171,9 +171,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
         lstm_model.train()
         # initialize hidden state
         h = lstm_model.init_hidden(batch_size, device)
-        index = 0
         for inputs, labels in train_loader:
-            index = index + 1
             inputs, labels = inputs.to(device), labels.to(device)
             # Creating new variables for the hidden state, otherwise
             # we'd backprop through the entire training history

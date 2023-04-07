@@ -44,7 +44,7 @@ class ConvolutionalNeuralNetworkClassifier(nn.Module):
                                    nn.Conv2d(1, NUM_FILTERS, [window_size, vec_model.vector_size], padding=(window_size - 1, 0))
                                    for window_size in window_sizes
         ])
-
+        self.dropout = nn.Dropout(0.5)
         self.fc = nn.Linear(NUM_FILTERS * len(window_sizes), num_classes)
 
         # embedding_dim = 300
@@ -111,6 +111,16 @@ class ConvolutionalNeuralNetworkClassifier(nn.Module):
         # return logits
         return probs
 
+        # x = self.embed(x)  # (N, W, D)
+        # x = x.unsqueeze(1)  # (N, Ci, W, D)
+        # x = [F.relu(conv(x)).squeeze(3) for conv in self.convs]  # [(N, Co, W), ...]*len(Ks)
+        # x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x]  # [(N, Co), ...]*len(Ks)
+        # x = torch.cat(x, 1)
+        # x = self.dropout(x)  # (N, len(Ks)*Co)
+        # logit = self.fc1(x)  # (N, C)
+        # return logit
+
+
 
 def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary,
                  padding=False, model_filename_test=None):
@@ -131,16 +141,16 @@ def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_tra
     #     loss_function = nn.CrossEntropyLoss()
     # loss_function = nn.BCELoss()
     loss_function = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(cnn_model.parameters(), lr=0.01)  # default 0.01
+    optimizer = optim.Adam(cnn_model.parameters(), lr=0.001)  # default 0.01
     # optimizer = optim.Adadelta(cnn_model.parameters(), lr=0.25, rho=0.9)
     # num_epochs = 1
     num_epochs = 30  # default 30
 
     # Open the file for writing loss
-    loss_file_name = constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv'
-    f = open(loss_file_name, 'w')
-    f.write('iter, loss')
-    f.write('\n')
+    # loss_file_name = constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv'
+    # f = open(loss_file_name, 'w')
+    # f.write('iter, loss')
+    # f.write('\n')
     losses = []
     cnn_model.train()
     for epoch in range(num_epochs):
@@ -174,13 +184,13 @@ def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_tra
         # if index == 0:
         #     continue
         # util.output("Epoch ran :" + str(epoch + 1))
-        f.write(str((epoch + 1)) + "," + str(train_loss / len(X_train)))
-        f.write('\n')
+        # f.write(str((epoch + 1)) + "," + str(train_loss / len(X_train)))
+        # f.write('\n')
         train_loss = 0
 
-    torch.save(cnn_model, constants.DATA_FOLDER + 'cnn_big_model_500_with_padding.pth')
+    # torch.save(cnn_model, constants.DATA_FOLDER + 'cnn_big_model_500_with_padding.pth')
 
-    f.close()
+    # f.close()
     # util.output("Input vector")
     # util.output(bow_vec.cpu().numpy())
     # util.output("Probs")
@@ -194,8 +204,8 @@ def testing_CNN(cnn_model, w2v_model, device, max_sen_len, X_test, Y_test_sentim
     bow_cnn_predictions = []
     original_lables_cnn_bow = []
     cnn_model.eval()
-    loss_df = pd.read_csv(constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv')
-    util.output(loss_df.columns)
+    # loss_df = pd.read_csv(constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv')
+    # util.output(loss_df.columns)
     # loss_df.plot('loss')
     with torch.no_grad():
         for index, row in X_test.items():
@@ -210,10 +220,10 @@ def testing_CNN(cnn_model, w2v_model, device, max_sen_len, X_test, Y_test_sentim
     # util.output("accuracy " + str(accuracy_score(original_lables_cnn_bow, bow_cnn_predictions)))
     # util.output("precision " + str(precision_score(original_lables_cnn_bow, bow_cnn_predictions)))
     # util.output("f1_score " + str(f1_score(original_lables_cnn_bow, bow_cnn_predictions)))
-    loss_file_name = constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv'
-    loss_df = pd.read_csv(loss_file_name)
-    util.output(loss_df.columns)
-    plt_500_padding_30_epochs = loss_df[' loss'].plot()
-    fig = plt_500_padding_30_epochs.get_figure()
-    fig.savefig(constants.DATA_FOLDER + 'plots/' + 'loss_plt_500_padding_30_epochs.pdf')
+    # loss_file_name = constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv'
+    # loss_df = pd.read_csv(loss_file_name)
+    # util.output(loss_df.columns)
+    # plt_500_padding_30_epochs = loss_df[' loss'].plot()
+    # fig = plt_500_padding_30_epochs.get_figure()
+    # fig.savefig(constants.DATA_FOLDER + 'plots/' + 'loss_plt_500_padding_30_epochs.pdf')
 
