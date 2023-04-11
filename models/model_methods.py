@@ -128,42 +128,20 @@ def create_bow_model_file(review_dict, df_sentiment, X_train, filename):
     # util.output("Time taken to create bow for :" + str(time.time() - start_time))
 
 
-def make_w2vec_vector(model, sentence, max_sen_len):
+def make_w2vec_vector(model, sentence, max_sen_len, is_fasttext=True):
     sentence_len = len(sentence)
     sentence_vec = [0] * max_sen_len
     i = max_sen_len - sentence_len
-    not_in = 0
-    in_in = 0
+
     for word in sentence:
         if word not in model.key_to_index:
-            # w2v_model.build_vocab(new_sentences, update=True)  # Update the vocabulary
-            # w2v_model.train(new_sentences, total_examples=len(new_sentences), epochs=model.epochs)
-            sentence_vec[i] = 0
-            # sentence_vec[i] = w2v_model.wv[word]
-            # util.output(word)
-            not_in += 1
+            # in case of fasttext, we can use most similar vector
+            if is_fasttext:
+                sentence_vec[i] = model.key_to_index[model.most_similar(word)[0][0]]
+            else:
+                sentence_vec[i] = 0
         else:
             sentence_vec[i] = model.key_to_index[word]
-            in_in += 1
-        i += 1
-
-    return sentence_vec
-
-
-def make_w2vec_vector_keyvector(model, sentence, max_sen_len):
-    sentence_len = len(sentence)
-    sentence_vec = [0] * max_sen_len
-    i = max_sen_len - sentence_len
-    for word in sentence:
-        if word not in model.key_to_index:
-            # w2v_model.build_vocab(new_sentences, update=True)  # Update the vocabulary
-            # w2v_model.train(new_sentences, total_examples=len(new_sentences), epochs=model.epochs)
-            sentence_vec[i] = 0
-            # sentence_vec[i] = w2v_model.wv[word]
-            # util.output(word)
-        else:
-            sentence_vec[i] = model.key_to_index[word]
-        i += 1
 
     return sentence_vec
 
