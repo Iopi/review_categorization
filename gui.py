@@ -18,6 +18,8 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
         MainWindow.resize(818, 473)
+        MainWindow.setMinimumSize(818, 473)
+        MainWindow.setMaximumSize(818, 473)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.sentence_text_edit = QtWidgets.QPlainTextEdit(self.centralwidget)

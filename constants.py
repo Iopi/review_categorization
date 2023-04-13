@@ -16,9 +16,9 @@ MULTILANGUAGE = True
 
 CATEGORIES = ['General', 'Food', 'Drink', 'Staff', 'Speed', 'Cleanness', 'Prices', 'Environment', 'Occupancy']
 
-DEFAULT_VEC_MODEL_CS = 'data/unsupervised/ft_cs_dot.bin'
-DEFAULT_VEC_MODEL_EN = 'data/unsupervised/ft_en_dot.bin'
-DEFAULT_VEC_MODEL_DE = 'data/unsupervised/ft_de_dot.bin'
+DEFAULT_VEC_MODEL_CS = 'data/unsupervised/ft_cs.bin'
+DEFAULT_VEC_MODEL_EN = 'data/unsupervised/ft_en.bin'
+DEFAULT_VEC_MODEL_DE = 'data/unsupervised/ft_de.bin'
 
 DEFAULT_REVIEWS_CS = 'data/review/reviews_cs.xlsx'
 DEFAULT_REVIEWS_EN = 'data/review/reviews_en.xlsx'

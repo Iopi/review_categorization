@@ -10,11 +10,9 @@ import seaborn as sns
 import plotly.express as px
 from sklearn.manifold import TSNE
 
-import constants
-import util
 
 # now we will Create and configure logger
-logging.basicConfig(filename="log.log",
+logging.basicConfig(filename="log.txt",
                     format='%(message)s',
                     filemode='w')
 # logging.basicConfig(filename="std.log",
@@ -40,17 +38,25 @@ def exception(message):
     raise Exception(message)
 
 
-def plot_distribution(top_data_df, sentiment):
+def plot_distribution(top_data_df, category_name):
     """
     Plotting the sentiment distribution
     :param top_data_df:
     :return:
     """
     plt.figure()
-    pd.value_counts(top_data_df[sentiment]).plot.bar(title="Sentiment General distribution in df")
-    plt.xlabel(sentiment)
+    pd.value_counts(top_data_df[category_name]).plot.bar(title="Sentiment General distribution in df")
+    plt.xlabel(category_name)
     plt.ylabel("No. of rows in df")
     plt.show()
+
+def sentiment_count(top_data_df, category_name):
+    category_data = top_data_df[category_name]
+    values = category_data.values
+    positive_count = np.count_nonzero(values == 1)
+    negative_count = np.count_nonzero(values == 0)
+
+    print(f"{category_name} - Positive {positive_count} / Negative {negative_count} (sum {positive_count+negative_count})")
 
 
 def plot_category_distribution(Y_train, category_name):
@@ -143,10 +149,10 @@ def bin2vec(filepath):
 def compute_majority_class(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_values(ascending=False)
     acc = sentiment_values.values[0] / sum(sentiment_values.values)
-    util.output(f"MC -> accuracy: {acc}")
+    output(f"MC -> accuracy: {acc}")
 
 
-def compute_x(Y_train):
+def compute_metrics(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_index()
     values_total = sum(sentiment_values.values)
     val_0 = sentiment_values.values[0]

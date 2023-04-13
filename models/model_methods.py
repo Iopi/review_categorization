@@ -16,7 +16,7 @@ import util
 import constants
 
 
-def make_fasttext_model(temp_df, sg=1, min_count=1, vector_size=300, workers=3, window=5, fasttext_file=None):
+def make_fasttext_model(temp_df, sg=1, min_count=2, vector_size=300, workers=3, window=5, fasttext_file=None):
     ft_model = FastText(sg=sg, vector_size=vector_size, window=window, min_count=min_count, workers=workers,
                         sentences=temp_df)
 
@@ -40,16 +40,17 @@ def make_fasttext_vector_cnn(w2v_model, sentence, device, max_sen_len):
     return torch.tensor(X, dtype=torch.long, device=device).view(1, -1)
 
 
-def make_word2vec_model(top_data_df_small, padding=True, sg=1, min_count=1, vector_size=500, workers=3, window=3):
+def make_word2vec_model(temp_df, padding=True, sg=1, min_count=2, vector_size=300, workers=3, window=3, word2vec_file=None):
     if padding:
         # util.output(len(top_data_df_small))
-        temp_df = pd.Series(top_data_df_small['tokens']).values
+        temp_df = pd.Series(temp_df).values
         temp_df = list(temp_df)
         temp_df.append(['pad'])
-        word2vec_file = constants.DATA_FOLDER + 'models/' + 'word2vec_' + str(vector_size) + '_PAD.model'
+        if word2vec_file is None:
+            word2vec_file = constants.DATA_FOLDER + 'models/' + 'word2vec_' + str(vector_size) + '_PAD.model'
     else:
-        temp_df = top_data_df_small['tokens']
-        word2vec_file = constants.DATA_FOLDER + 'models/' + 'word2vec_' + str(vector_size) + '.model'
+        if word2vec_file is None:
+            word2vec_file = constants.DATA_FOLDER + 'models/' + 'word2vec_' + str(vector_size) + '.model'
     w2v_model = Word2Vec(temp_df, min_count=min_count, vector_size=vector_size, workers=workers, window=window, sg=sg)
 
     w2v_model.save(word2vec_file)
@@ -142,6 +143,8 @@ def make_w2vec_vector(model, sentence, max_sen_len, is_fasttext=True):
                 sentence_vec[i] = 0
         else:
             sentence_vec[i] = model.key_to_index[word]
+
+        i += 1
 
     return sentence_vec
 
