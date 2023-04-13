@@ -129,7 +129,7 @@ def create_bow_model_file(review_dict, df_sentiment, X_train, filename):
     # util.output("Time taken to create bow for :" + str(time.time() - start_time))
 
 
-def make_w2vec_vector(model, sentence, max_sen_len, is_fasttext=True):
+def make_vector_index_map(model, sentence, max_sen_len, is_fasttext):
     sentence_len = len(sentence)
     sentence_vec = [0] * max_sen_len
     i = max_sen_len - sentence_len

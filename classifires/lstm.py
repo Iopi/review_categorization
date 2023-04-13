@@ -16,8 +16,7 @@ from models import model_methods
 
 class LongShortTermMemory(nn.Module):
     def __init__(self, device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
-                 model_filename_train=None,
-                 vector_filename_train=None, model_filename_test=None, vector_filename_test=None, trans_matrix=None):
+                 model_filename_train=None, model_filename_test=None, trans_matrix=None):
         super(LongShortTermMemory, self).__init__()
 
         self.output_dim = output_dim
@@ -29,21 +28,14 @@ class LongShortTermMemory(nn.Module):
         # embedding and LSTM layers
         # self.embedding = nn.Embedding(vocab_size, embedding_dim)
 
-        if model_filename_train:
-            vec_model_train = gensim.models.KeyedVectors.load(model_filename_train)
-            weights_train = vec_model_train.wv
-        else:
-            weights_train = KeyedVectors.load_word2vec_format(vector_filename_train, binary=False)
+        vec_model_train = gensim.models.KeyedVectors.load(model_filename_train)
+        weights_train = vec_model_train.wv
 
         self.embedding_train = nn.Embedding.from_pretrained(torch.FloatTensor(weights_train.vectors))
 
-        if model_filename_test or vector_filename_test:
-            if model_filename_test:
-                vec_model_test = gensim.models.KeyedVectors.load(model_filename_test)
-                weights_test = vec_model_test.wv
-            else:
-                weights_test = KeyedVectors.load_word2vec_format(vector_filename_test, binary=False)
-
+        if model_filename_test:
+            vec_model_test = gensim.models.KeyedVectors.load(model_filename_test)
+            weights_test = vec_model_test.wv
             self.embedding_test = nn.Embedding.from_pretrained(torch.FloatTensor(weights_test.vectors))
         else:
             self.embedding_test = self.embedding_train
@@ -114,10 +106,9 @@ class LongShortTermMemory(nn.Module):
         return hidden
 
 
-def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary=False,
-                  batch_size=1, model_filename_train=None, vector_filename_train=None, model_filename_test=None,
-                  vector_filename_test=None):
-    X_train = [model_methods.make_w2vec_vector(vec_model, line, max_sen_len) for line in X_train]
+def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary, is_fasttext,
+                  batch_size=1, model_filename_train=None, model_filename_test=None):
+    X_train = [model_methods.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in X_train]
     X_train = np.array(X_train)
     Y_train = Y_train_sentiment.to_numpy()
     X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.25,
@@ -135,8 +126,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
 
     lstm_model = LongShortTermMemory(device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
                                      model_filename_train=model_filename_train,
-                                     vector_filename_train=vector_filename_train,
-                                     model_filename_test=model_filename_test, vector_filename_test=vector_filename_test,
+                                     model_filename_test=model_filename_test,
                                      trans_matrix=trans_matrix)
 
     # moving to gpu
@@ -248,7 +238,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     return lstm_model
 
 
-def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment):
+def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext):
     # bow_cnn_predictions = []
     # original_lables_cnn_bow = []
     # lstm_model.eval()
@@ -283,7 +273,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
             # print(text)
             # tokens = simple_preprocess(text, deacc=True)
             # tags = [czech_stemmer.cz_stem(word) for word in tokens]
-            vec = model_methods.make_w2vec_vector(vec_model_test, tags, max_sen_len)
+            vec = model_methods.make_vector_index_map(vec_model_test, tags, max_sen_len, is_fasttext)
 
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)
@@ -304,10 +294,10 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
     util.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
 
 
-def classifie_LSTM(lstm_model, source_model, device, max_sen_len, words):
+def classifie_LSTM(lstm_model, source_model, device, max_sen_len, words, is_fasttext=True):
     lstm_model.eval()
     with torch.no_grad():
-        vec = model_methods.make_w2vec_vector(source_model, words, max_sen_len)
+        vec = model_methods.make_vector_index_map(source_model, words, max_sen_len, is_fasttext)
 
         inputs = np.expand_dims(vec, axis=0)
         torch.from_numpy(inputs).float().to(device)

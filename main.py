@@ -16,16 +16,15 @@ from models import model_methods
 from nltk.corpus import stopwords
 
 
-def classification_sentiments(data_df_ranked, categories, binary, args, model_tuple, test_data_df=None):
+def classification_sentiments(data_df_ranked, categories, binary, model_tuple, test_data_df=None):
     start_time = time.time()
 
     model_filename_train = model_tuple[0]
-    vector_filename_train = model_tuple[1]
-    model_filename_test = model_tuple[2]
-    vector_filename_test = model_tuple[3]
-    vec_model_train = model_tuple[4]
-    vec_model_test = model_tuple[5]
-    trans_matrix = model_tuple[6]
+    model_filename_test = model_tuple[1]
+    vec_model_train = model_tuple[2]
+    vec_model_test = model_tuple[3]
+    trans_matrix = model_tuple[4]
+    is_fasttext = model_tuple[5]
 
     # util.print_similarity(vec_model_train, "personal")
     # print_similarity(vec_model_train, "jidlo")
@@ -93,12 +92,10 @@ def classification_sentiments(data_df_ranked, categories, binary, args, model_tu
             max_sen_len = max(max_sen_len, max_sen_len_test)
 
         # X # LSTM with w2v/fasttext model
-        lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary,
+        lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary, is_fasttext,
                                         batch_size=1, model_filename_train=model_filename_train,
-                                        vector_filename_train=vector_filename_train,
-                                        model_filename_test=model_filename_test,
-                                        vector_filename_test=vector_filename_test)
-        lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test)
+                                        model_filename_test=model_filename_test)
+        lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext)
 
         # cnn2.cnn_preocess(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
         #                          binary, model_filename_test, vec_model_test, X_test, Y_test, padding=True)
@@ -302,7 +299,7 @@ def parse_agrs():
     return args
 
 
-def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple):
+def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, model_tuple):
     # annotated 1, not annotated 0
     util.output("Annotated 1, not annotated 0")
     temp_data = reviews_df.copy()
@@ -310,12 +307,12 @@ def classification_sentiments_annotated(reviews_df, reviews_test_df, classes, ar
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
         preprocessing_methods.map_annotated(temp_data_test)
-        classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
+        classification_sentiments(temp_data, classes, True, model_tuple, temp_data_test)
     else:
-        classification_sentiments(temp_data, classes, True, args, model_tuple)
+        classification_sentiments(temp_data, classes, True, model_tuple)
 
 
-def classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple):
+def classification_sentiments_positive(reviews_df, reviews_test_df, classes, model_tuple):
     # positive 1, negative 0
     util.output("Positive 1, negative 0")
     temp_data = reviews_df.copy()
@@ -323,12 +320,12 @@ def classification_sentiments_positive(reviews_df, reviews_test_df, classes, arg
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
         preprocessing_methods.map_sentiment(temp_data_test)
-        classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
+        classification_sentiments(temp_data, classes, True, model_tuple, temp_data_test)
     else:
-        classification_sentiments(temp_data, classes, True, args, model_tuple)
+        classification_sentiments(temp_data, classes, True, model_tuple)
 
 
-def classification_sentiments_negative(reviews_df, reviews_test_df, classes, args, model_tuple):
+def classification_sentiments_negative(reviews_df, reviews_test_df, classes, model_tuple):
     # negative 1, positive 0
     util.output("Negative 1, positive 0")
     temp_data = reviews_df.copy()
@@ -336,17 +333,20 @@ def classification_sentiments_negative(reviews_df, reviews_test_df, classes, arg
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
         preprocessing_methods.map_sentiment_negative(temp_data_test)
-        classification_sentiments(temp_data, classes, True, args, model_tuple, temp_data_test)
+        classification_sentiments(temp_data, classes, True, model_tuple, temp_data_test)
     else:
-        classification_sentiments(temp_data, classes, True, args, model_tuple)
+        classification_sentiments(temp_data, classes, True, model_tuple)
 
 
 def load_models_and_trans_matrix(args, trans_method, filename):
-    model_filename_train = None
-    vector_filename_train = None
     model_filename_test = None
-    vector_filename_test = None
     trans_matrix = None
+    if args.model_type == 'ft':
+        is_fasttext = True
+    elif args.model_type == 'w2v':
+        is_fasttext = False
+    else:
+        util.exception(f"Model type {args.model_type} not found.")
 
     # if args.model_type == 'vec':
     #     vector_filename_train = args.model_path
@@ -369,8 +369,7 @@ def load_models_and_trans_matrix(args, trans_method, filename):
     else:
         vec_model_test = vec_model_train
 
-    return model_filename_train, vector_filename_train, model_filename_test, vector_filename_test, vec_model_train, \
-           vec_model_test, trans_matrix
+    return model_filename_train, model_filename_test, vec_model_train, vec_model_test, trans_matrix, is_fasttext
 
 
 def main():
@@ -413,8 +412,8 @@ def main():
     trans_method, filename = "orto1", constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}_muj.txt"
     model_tuple = load_models_and_trans_matrix(args, trans_method, filename)
 
-    classification_sentiments_annotated(reviews_df, reviews_test_df, classes, args, model_tuple)
-    classification_sentiments_positive(reviews_df, reviews_test_df, classes, args, model_tuple)
+    classification_sentiments_annotated(reviews_df, reviews_test_df, classes, model_tuple)
+    classification_sentiments_positive(reviews_df, reviews_test_df, classes, model_tuple)
 
 if __name__ == "__main__":
     main()
