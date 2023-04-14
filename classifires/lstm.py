@@ -238,33 +238,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     return lstm_model
 
 
-def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext):
-    # bow_cnn_predictions = []
-    # original_lables_cnn_bow = []
-    # lstm_model.eval()
-    # loss_df = pd.read_csv(constants.DATA_FOLDER + 'plots/' + 'cnn_class_big_loss_with_padding.csv')
-    # util.output(loss_df.columns)
-    # # loss_df.plot('loss')
-    # with torch.no_grad():
-    #     # for index, row in X_test.iterrows():
-    #     index = 0
-    #     for tags in X_test:
-    #         # bow_vec = models.make_word2vec_vector_cnn(vec_model, row['tokens'], device, max_sen_len)
-    #         vec = models.make_w2vec_vector(vec_model, tags, max_sen_len)
-    #         inputs = np.expand_dims(vec, axis=0)
-    #         inputs = torch.from_numpy(inputs)
-    #         batch_size = 1
-    #         h = lstm_model.init_hidden(batch_size, device)
-    #         h = tuple([each.data for each in h])
-    #         probs, h = lstm_model(inputs, h)
-    #         # probs = lstm_model(vec)
-    #         _, predicted = torch.max(probs.data, 1)
-    #         bow_cnn_predictions.append(predicted.cpu().numpy()[0])
-    #         # original_lables_cnn_bow.append(make_target(Y_test_sentiment[index], device).cpu().numpy()[0])
-    #         original_lables_cnn_bow.append(torch.tensor([Y_test_sentiment[index]], dtype=torch.long).cpu().numpy()[0])
-    #         index += 1
-    # util.output(classification_report(original_lables_cnn_bow, bow_cnn_predictions))
-
+def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext, category_name):
     bow_cnn_predictions = []
     lstm_model.eval()
     with torch.no_grad():
@@ -286,11 +260,8 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
                 bow_cnn_predictions.append(0)
             else:
                 bow_cnn_predictions.append(1)
-            # status = "Positive" if output > 0.5 else "Negative"
-            # output = (1 - output) if status == "Negative" else output
-            # print(f'Predicted sentiment is {status} with a probability of {output}')
-            # print(f'Actual sentiment is  : {Y_test_sentiment[i]}')
             i += 1
+    util.print_metrics(Y_test_sentiment, bow_cnn_predictions, category_name)
     util.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
 
 

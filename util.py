@@ -24,8 +24,16 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 # Let us Create an object
 logger = logging.getLogger()
 
+
 # Now we are going to Set the threshold of logger to DEBUG
 logger.setLevel(logging.DEBUG)
+
+logging.basicConfig(filename="metrics.txt",
+                    format='%(message)s',
+                    filemode='w')
+logging.getLogger('matplotlib.font_manager').disabled = True
+logger2 = logging.getLogger()
+logger2.setLevel(logging.DEBUG)
 
 
 def output(message):
@@ -151,6 +159,35 @@ def compute_majority_class(Y_train):
     acc = sentiment_values.values[0] / sum(sentiment_values.values)
     output(f"MC -> accuracy: {acc}")
 
+def print_metrics(true_labels, classified_labels, category_name):
+    if len(true_labels) != len(classified_labels):
+        exception("Count of true labels must be same as classified labels.")
+
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+
+    for x in range(len(true_labels)):
+        if true_labels[x] == classified_labels[x]:
+            if classified_labels[x] == 1:
+                TP += 1
+            else:
+                TN += 1
+
+        else:
+            if classified_labels[x] == 1:
+                FP += 1
+            else:
+                FN += 1
+
+    recall = TP / (TP + FN)
+    precision = TP / (TP + FP)
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    f1score = 2 * precision * recall / (precision + recall)
+    f1score2 = (2 * TP) / (2 * TP + FP + FN)
+
+    logger2.info(f"{category_name} -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score} / {f1score2}")
 
 def compute_metrics(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_index()

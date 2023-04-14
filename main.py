@@ -95,7 +95,7 @@ def classification_sentiments(data_df_ranked, categories, binary, model_tuple, t
         lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train, binary, is_fasttext,
                                         batch_size=1, model_filename_train=model_filename_train,
                                         model_filename_test=model_filename_test)
-        lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext)
+        lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext, category_name)
 
         # cnn2.cnn_preocess(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
         #                          binary, model_filename_test, vec_model_test, X_test, Y_test, padding=True)
