@@ -419,70 +419,6 @@ class Ui_MainWindow(object):
         else:
             self.classifiers["cnn"] = Classifier("cnn")
 
-    # def classification_process(self, classifier_method, train_reviews, trans_matrix, target_model, source_model,
-    #                            sent_language, target_language, words):
-    #     index = 0
-    #     max_sen_len = train_reviews.tokens.map(len).max()
-    #     if len(words) > max_sen_len:
-    #         self.label_3.setText(
-    #             f"Count of sentence words after preprocessing ({len(words)}) can not be higher then {max_sen_len}.")
-    #         self.label_3.repaint()
-    #         return
-    #
-    #     for category_name, cat_models in self.classifiers[classifier_method].categories.items():
-    #
-    #         if cat_models['existence'] is None:
-    #             self.label_3.setText(f"Training {classifier_method} - existence for category {category_name}...")
-    #             self.label_3.repaint()
-    #             temp_data = train_reviews.copy()
-    #             preprocessing_methods.map_annotated(temp_data)
-    #             cat_models['existence'] = self.classifiers[classifier_method].train_model(classifier_method, temp_data,
-    #                                                                                       trans_matrix, target_model,
-    #                                                                                       self.device, sent_language,
-    #                                                                                       target_language,
-    #                                                                                       category_name,
-    #                                                                                       max_sen_len, self.models)
-    #         self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
-    #         self.label_3.repaint()
-    #         result = self.classifiers[classifier_method].test_model(classifier_method,
-    #                                                                 cat_models['existence'], source_model, self.device,
-    #                                                                 max_sen_len, words)
-    #
-    #         if result >= 0.0: # 0.5
-    #             if cat_models['sentiment'] is None:
-    #                 self.label_3.setText(f"Training {classifier_method} - sentiment for category {category_name}...")
-    #                 self.label_3.repaint()
-    #                 temp_data = train_reviews.copy()
-    #                 preprocessing_methods.map_sentiment(temp_data)
-    #                 temp_data = temp_data[temp_data[category_name] != 2]
-    #                 cat_models['sentiment'] = self.classifiers[classifier_method].train_model(classifier_method,
-    #                                                                                           temp_data,
-    #                                                                                           trans_matrix,
-    #                                                                                           target_model,
-    #                                                                                           self.device,
-    #                                                                                           sent_language,
-    #                                                                                           target_language,
-    #                                                                                           category_name,
-    #                                                                                           max_sen_len, self.models)
-    #             self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
-    #             self.label_3.repaint()
-    #             result = self.classifiers[classifier_method].test_model(classifier_method,
-    #                                                                     cat_models['sentiment'], source_model,
-    #                                                                     self.device, max_sen_len, words)
-    #
-    #             if result >= 0.5:
-    #                 self.result_table.item(0, index).setText(Sentiment.POSITIVE.value)
-    #                 self.result_table.item(1, index).setText(str(round(result, 2)))
-    #             else:
-    #                 self.result_table.item(0, index).setText(Sentiment.NEGATIVE.value)
-    #                 self.result_table.item(1, index).setText(str(round(1 - result, 2)))
-    #             self.result_table.repaint()
-    #         else:
-    #             self.result_table.item(0, index).setText("x")
-    #             self.result_table.item(1, index).setText("x")
-    #             self.result_table.repaint()
-    #         index += 1
-
     def classification_process(self, classifier_method, train_reviews, trans_matrix, target_model, source_model,
                                sent_language, target_language, words):
         index = 0
@@ -494,7 +430,6 @@ class Ui_MainWindow(object):
             return
 
         for category_name in constants.CATEGORIES:
-            print(category_name)
             classifier = self.load_models(classifier_method, category_name, train_reviews, trans_matrix, target_model,
                                           sent_language, target_language, max_sen_len)
 
@@ -504,7 +439,7 @@ class Ui_MainWindow(object):
                                            classifier.category_models['existence'], source_model, self.device,
                                            max_sen_len, words)
 
-            if result >= 0.0:  # 0.5
+            if result >= 0.5:  # 0.5
 
                 self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
                 self.label_3.repaint()

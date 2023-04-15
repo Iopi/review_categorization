@@ -261,7 +261,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
             else:
                 bow_cnn_predictions.append(1)
             i += 1
-    util.print_metrics(Y_test_sentiment, bow_cnn_predictions, category_name)
+    # util.print_metrics(Y_test_sentiment, bow_cnn_predictions, category_name)
     util.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
 
 

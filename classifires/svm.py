@@ -6,7 +6,7 @@ def training_Linear_SVM(Y_train_sentiment, model_filename):
     # start_time = time.time()
 
     # Read the TFIDF/BOW vectors
-    vectors_model = pd.read_csv(model_filename)
+    vectors_model = pd.read_csv(model_filename, sep=';')
 
     # Initialize the model
     clf_svm = LinearSVC(random_state=0)

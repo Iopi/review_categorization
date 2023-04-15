@@ -14,6 +14,8 @@ FEED_FILE = 'feed_en.xlsx'
 CREATE_MODEL = False
 MULTILANGUAGE = True
 
+MODEL_FOLDER = 'data/vec_model/'
+
 CATEGORIES = ['General', 'Food', 'Drink', 'Staff', 'Speed', 'Cleanness', 'Prices', 'Environment', 'Occupancy']
 
 DEFAULT_VEC_MODEL_CS = 'data/unsupervised/ft_cs.bin'

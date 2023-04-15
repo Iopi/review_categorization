@@ -11,29 +11,14 @@ import plotly.express as px
 from sklearn.manifold import TSNE
 
 
-# now we will Create and configure logger
+# logger creating
 logging.basicConfig(filename="log.txt",
                     format='%(message)s',
                     filemode='w')
-# logging.basicConfig(filename="std.log",
-#                     format='%(asctime)s %(message)s',
-#                     filemode='w')
-
 logging.getLogger('matplotlib.font_manager').disabled = True
 
-# Let us Create an object
 logger = logging.getLogger()
-
-
-# Now we are going to Set the threshold of logger to DEBUG
-logger.setLevel(logging.DEBUG)
-
-logging.basicConfig(filename="metrics.txt",
-                    format='%(message)s',
-                    filemode='w')
-logging.getLogger('matplotlib.font_manager').disabled = True
-logger2 = logging.getLogger()
-logger2.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 def output(message):
@@ -180,14 +165,26 @@ def print_metrics(true_labels, classified_labels, category_name):
                 FP += 1
             else:
                 FN += 1
+    try:
+        recall = TP / (TP + FN)
+    except ZeroDivisionError:
+        recall = 0
+    try:
+        precision = TP / (TP + FP)
+    except ZeroDivisionError:
+        precision = 0
+    try:
+        accuracy = (TP + TN) / (TP + TN + FP + FN)
+    except ZeroDivisionError:
+        accuracy = 0
+    try:
+        f1score = 2 * precision * recall / (precision + recall)
+        f1score2 = (2 * TP) / (2 * TP + FP + FN)
+    except ZeroDivisionError:
+        f1score = 0
+        f1score2 = 0
 
-    recall = TP / (TP + FN)
-    precision = TP / (TP + FP)
-    accuracy = (TP + TN) / (TP + TN + FP + FN)
-    f1score = 2 * precision * recall / (precision + recall)
-    f1score2 = (2 * TP) / (2 * TP + FP + FN)
-
-    logger2.info(f"{category_name} -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score} / {f1score2}")
+    logger.info(f"{category_name} -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score} / {f1score2}")
 
 def compute_metrics(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_index()

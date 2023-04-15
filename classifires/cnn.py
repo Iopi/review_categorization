@@ -39,7 +39,7 @@ class ConvolutionalNeuralNetworkClassifier(nn.Module):
             self.embedding_test = self.embedding_train
         # Without pretrained embeddings
         # self.embedding = nn.Embedding(vocab_size, EMBEDDING_SIZE)
-
+        # self.convs = nn.ModuleList([nn.Conv2d(1, NUM_FILTERS, (window_size, vec_model.vector_size)) for window_size in window_sizes])
         self.convs = nn.ModuleList([
                                    nn.Conv2d(1, NUM_FILTERS, [window_size, vec_model.vector_size], padding=(window_size - 1, 0))
                                    for window_size in window_sizes
@@ -111,18 +111,18 @@ class ConvolutionalNeuralNetworkClassifier(nn.Module):
         # return logits
         return probs
 
-        # x = self.embed(x)  # (N, W, D)
+        # x = self.embedding_train(x)  # (N, W, D)
         # x = x.unsqueeze(1)  # (N, Ci, W, D)
         # x = [F.relu(conv(x)).squeeze(3) for conv in self.convs]  # [(N, Co, W), ...]*len(Ks)
         # x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x]  # [(N, Co), ...]*len(Ks)
         # x = torch.cat(x, 1)
         # x = self.dropout(x)  # (N, len(Ks)*Co)
-        # logit = self.fc1(x)  # (N, C)
+        # logit = self.fc(x)  # (N, C)
         # return logit
 
 
 
-def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary,
+def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, is_fasttext, binary,
                  padding=False, model_filename_test=None):
     if binary:
         NUM_CLASSES = 2
@@ -161,7 +161,9 @@ def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_tra
             cnn_model.zero_grad()
 
             # Make the bag of words vector for stemmed tokens
-            bow_vec = model_methods.make_word2vec_vector_cnn(model, row, device, max_sen_len)
+            bow_vec = model_methods.make_word2vec_vector_cnn(model, row, device, max_sen_len, is_fasttext)
+            # bow_vec = model_methods.make_vector_index_map(model, row, max_sen_len, is_fasttext)
+            # bow_vec = model_methods.make_word2vec_vector_cnn(model, row, device, max_sen_len)
             # bow_vec = models.make_fasttext_vector_cnn(model, row['tokens'], device, max_sen_len)
 
             # Forward pass to get util.output
@@ -200,7 +202,7 @@ def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_tra
     return cnn_model
 
 
-def testing_CNN(cnn_model, w2v_model, device, max_sen_len, X_test, Y_test_sentiment):
+def testing_CNN(cnn_model, vec_model, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext, category_name):
     bow_cnn_predictions = []
     original_lables_cnn_bow = []
     cnn_model.eval()
@@ -209,12 +211,16 @@ def testing_CNN(cnn_model, w2v_model, device, max_sen_len, X_test, Y_test_sentim
     # loss_df.plot('loss')
     with torch.no_grad():
         for index, row in X_test.items():
-            bow_vec = model_methods.make_word2vec_vector_cnn(w2v_model, row, device, max_sen_len)
+            bow_vec = model_methods.make_word2vec_vector_cnn(vec_model, row, device, max_sen_len, is_fasttext)
+            # bow_vec = model_methods.make_vector_index_map(vec_model, row, max_sen_len, is_fasttext)
+            # bow_vec = model_methods.make_word2vec_vector_cnn(vec_model, row, device, max_sen_len)
             probs = cnn_model(bow_vec, False)
             _, predicted = torch.max(probs.data, 1)
             bow_cnn_predictions.append(predicted.cpu().numpy()[0])
             # original_lables_cnn_bow.append(make_target(Y_test_sentiment[index], device).cpu().numpy()[0])
             original_lables_cnn_bow.append(torch.tensor([Y_test_sentiment[index]], dtype=torch.long).cpu().numpy()[0])
+
+    # util.print_metrics(original_lables_cnn_bow, bow_cnn_predictions, category_name)
     util.output(classification_report(original_lables_cnn_bow, bow_cnn_predictions))
     # util.output("recall " + str(recall_score(original_lables_cnn_bow, bow_cnn_predictions)))
     # util.output("accuracy " + str(accuracy_score(original_lables_cnn_bow, bow_cnn_predictions)))

@@ -10,8 +10,8 @@ from torch import optim
 
 import constants
 import util
+from models import model_methods
 from preprocessing import preprocessing_methods
-from vector_model import models
 
 
 # Defining neural network structure
@@ -53,13 +53,13 @@ def training_LogReg(review_dict, device, X_train, Y_train_sentiment):
 
     # Train the model
     for epoch in range(200):  # default 100
-        for index, row in X_train.iterrows():
+        for index, row in X_train.items():
             # Step 1. Remember that PyTorch accumulates gradients.
             # We need to clear them out before each instance
             lr_nn_model.zero_grad()
 
             # Step 2. Make BOW vector for input features and target label
-            bow_vec = models.make_bow_vector(review_dict, row['tokens'], device)
+            bow_vec = model_methods.make_bow_vector(review_dict, row, device)
             target = preprocessing_methods.make_target(Y_train_sentiment[index], device)
 
             # Step 3. Run the forward pass.
@@ -79,8 +79,8 @@ def testing_LogReg(review_dict, bow_nn_model, device, X_test, Y_test_sentiment):
     original_lables = []
     start_time = time.time()
     with torch.no_grad():
-        for index, row in X_test.iterrows():
-            bow_vec = models.make_bow_vector(review_dict, row['tokens'], device)
+        for index, row in X_test.items():
+            bow_vec = model_methods.make_bow_vector(review_dict, row, device)
             probs = bow_nn_model(bow_vec)
             lr_nn_predictions.append(torch.argmax(probs, dim=1).cpu().numpy()[0])
             original_lables.append(preprocessing_methods.make_target(Y_test_sentiment[index], device).cpu().numpy()[0])
@@ -93,7 +93,7 @@ def training_Logistic_Regression(Y_train_sentiment, model_filename):
     # start_time = time.time()
 
     # Read the TFIDF/BOW vectors
-    vectors_model = pd.read_csv(model_filename)
+    vectors_model = pd.read_csv(model_filename, sep=';')
 
     # Initialize the model
     clf = LogisticRegression(random_state=0)
