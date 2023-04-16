@@ -18,14 +18,14 @@ MODEL_FOLDER = 'data/vec_model/'
 
 CATEGORIES = ['General', 'Food', 'Drink', 'Staff', 'Speed', 'Cleanness', 'Prices', 'Environment', 'Occupancy']
 
-DEFAULT_VEC_MODEL_CS = 'data/unsupervised/ft_cs.bin'
-DEFAULT_VEC_MODEL_EN = 'data/unsupervised/ft_en.bin'
-DEFAULT_VEC_MODEL_DE = 'data/unsupervised/ft_de.bin'
+DEFAULT_VEC_MODEL_CS = 'data/vec_model/ft_cs.bin'
+DEFAULT_VEC_MODEL_EN = 'data/vec_model/ft_en.bin'
+DEFAULT_VEC_MODEL_DE = 'data/vec_model/ft_de.bin'
 
 DEFAULT_REVIEWS_CS = 'data/review/reviews_cs.xlsx'
 DEFAULT_REVIEWS_EN = 'data/review/reviews_en.xlsx'
 DEFAULT_REVIEWS_DE = 'data/review/reviews_de.xlsx'
 
-CLASSIFIER_LSTM_CS = 'data/saved_classifiers/lstm_models_'
-CLASSIFIER_CNN_CS = 'data/saved_classifiers/cnn_models_'
+CLASSIFIER_LSTM = 'data/saved_classifiers/lstm_models_'
+CLASSIFIER_CNN = 'data/saved_classifiers/cnn_models_'
 

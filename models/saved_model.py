@@ -36,14 +36,14 @@ class SavedModels:
                 self.english_model = KeyedVectors.load(constants.DEFAULT_VEC_MODEL_EN)
                 self.english_model = self.english_model.wv
                 self.english_model_filename = constants.DEFAULT_VEC_MODEL_EN
-                return self.english_model
+            return self.english_model
 
         elif lang == Language.GERMAN.value:
             if self.german_model is None:
                 self.german_model = KeyedVectors.load(constants.DEFAULT_VEC_MODEL_DE)
                 self.german_model = self.german_model.wv
                 self.german_model_filename = constants.DEFAULT_VEC_MODEL_DE
-                return self.german_model
+            return self.german_model
 
         else:
             util.exception(f"Unknown language {lang}")
