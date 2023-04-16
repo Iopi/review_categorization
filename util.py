@@ -232,3 +232,43 @@ def remove_duplicates(filename):
 
     with open(filename, 'w') as f:
         f.writelines(words)
+
+
+def print_info(args, is_fasttext):
+    info = ""
+    if is_fasttext is None:
+        if args.model_type == 'bow':
+            info += "Bag of words - "
+        elif args.model_type == 'tfidf':
+            info += "Tf-idf - "
+        else:
+            exception(f"Wrong model type {args.model_type}")
+
+        if args.classi_model == "svm":
+            info += 'Support vector machines'
+
+        elif args.classi_model == "logreg":
+            info += 'Logistic regression'
+
+        elif args.classi_model == "dectree":
+            info += 'Decision tree'
+
+        else:
+            exception(f"Wrong classification model {args.classi_model}")
+
+    else:
+        if is_fasttext:
+            info += "Fasttext - "
+        else:
+            info += "Word2vec - "
+
+        if args.classi_model == "lstm":
+            output(info + "Long short-term memory")
+
+        elif args.classi_model == "cnn":
+            output(info + "Convolutional neural networks")
+
+        else:
+            exception(f"Wrong classification model {args.classi_model}")
+
+    output(info)

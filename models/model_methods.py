@@ -145,7 +145,6 @@ def create_bow_model_file(review_dict, df_sentiment, X_train, filename):
             features = gensim.matutils.corpus2csc([review_dict.doc2bow(row)],
                                                   num_terms=vocab_len).toarray()[:, 0]
             if index == 0:
-                util.output("Header")
                 header = ";".join(str(review_dict[ele]) for ele in range(vocab_len))
                 header = header.replace("\n", "")
                 bow_file.write(header)
@@ -160,11 +159,9 @@ def create_bow_model_file(review_dict, df_sentiment, X_train, filename):
 # Function to return the dictionary either with padding word or without padding
 def make_dict(top_data_df_small, padding=True):
     if padding:
-        util.output("Dictionary with padded token added")
         review_dict = corpora.Dictionary([['pad']])
         review_dict.add_documents(top_data_df_small['tokens'])
     else:
-        util.output("Dictionary without padding")
         review_dict = corpora.Dictionary(top_data_df_small['tokens'])
     return review_dict
 

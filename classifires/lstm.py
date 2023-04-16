@@ -51,7 +51,7 @@ class LongShortTermMemory(nn.Module):
         #                             num_layers=no_layers, batch_first=True)
 
         # dropout layer
-        self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(0.5)
 
         # linear and sigmoid layer
         self.fc = nn.Linear(self.hidden_dim, output_dim)
