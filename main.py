@@ -72,73 +72,72 @@ def classification_sentiments(data_df_ranked, categories, binary, model_tuple, a
         # util.plot_category_distribution(Y_train, category_name)
 
         util.compute_majority_class(Y_test)
-        for x in range(3):
-            # if simple classifier
-            if vec_model_train is None:
-                clf = None
-                filename = None
-                tfidf_model = None
-                review_dict = model_methods.make_dict(df_sentiment, padding=False)
-                # create text representation
-                # bag of words vector representation
-                if args.model_type == 'bow':
-                    filename = constants.MODEL_FOLDER + 'train_review_bow.csv'
-                    model_methods.create_bow_model_file(review_dict, df_sentiment, X_train, filename)
-                    clf = decision_tree.training_Decision_Tree(Y_train, filename)
+        # if simple classifier
+        if vec_model_train is None:
+            clf = None
+            filename = None
+            tfidf_model = None
+            review_dict = model_methods.make_dict(df_sentiment, padding=False)
+            # create text representation
+            # bag of words vector representation
+            if args.model_type == 'bow':
+                filename = constants.MODEL_FOLDER + 'train_review_bow.csv'
+                model_methods.create_bow_model_file(review_dict, df_sentiment, X_train, filename)
+                clf = decision_tree.training_Decision_Tree(Y_train, filename)
 
-                # tf-idf vector representation
-                elif args.model_type == 'tfidf':
-                    filename = constants.MODEL_FOLDER + 'train_review_tfidf.csv'
-                    tfidf_model = model_methods.create_tfidf_model_file(review_dict, df_sentiment, X_train, filename)
-                else:
-                    util.exception(f"Wrong model type {args.model_type}")
-
-                # train classificator
-                # svm classificator
-                if args.classi_model == "svm":
-                    clf = svm.training_Linear_SVM(Y_train, filename)
-
-                # logistic regression classificator
-                elif args.classi_model == "logreg":
-                    clf = log_reg.training_Logistic_Regression(Y_train, filename)
-
-                # decision tree classificator
-                elif args.classi_model == "dectree":
-                    clf = decision_tree.training_Decision_Tree(Y_train, filename)
-
-                else:
-                    util.exception(f"Wrong classification model {args.classi_model}")
-
-                # test classificator
-                if args.model_type == 'bow':
-                    model_methods.testing_classificator_with_bow(clf, review_dict, X_test, Y_test)
-
-                elif args.model_type == 'tfidf':
-                    model_methods.testing_classificator_with_tfidf(clf, tfidf_model, review_dict, X_test, Y_test)
-
-            # if neural network
+            # tf-idf vector representation
+            elif args.model_type == 'tfidf':
+                filename = constants.MODEL_FOLDER + 'train_review_tfidf.csv'
+                tfidf_model = model_methods.create_tfidf_model_file(review_dict, df_sentiment, X_train, filename)
             else:
-                max_sen_len = df_sentiment.tokens.map(len).max()
-                if df_test is not None:
-                    max_sen_len_test = df_test.tokens.map(len).max()
-                    max_sen_len = max(max_sen_len, max_sen_len_test)
+                util.exception(f"Wrong model type {args.model_type}")
 
-                # lstm classificator
-                if args.classi_model == "lstm":
-                    lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train,
-                                                    binary, is_fasttext,
-                                                    batch_size=1, model_filename_train=model_filename_train,
-                                                    model_filename_test=model_filename_test)
-                    lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext,
-                                      category_name)
+            # train classificator
+            # svm classificator
+            if args.classi_model == "svm":
+                clf = svm.training_Linear_SVM(Y_train, filename)
 
-                # cnn classificator
-                elif args.classi_model == "cnn":
-                    cnn_model = cnn.training_CNN(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
-                                             is_fasttext, binary, padding=True, model_filename_test=model_filename_test)
-                    cnn.testing_CNN(cnn_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext, category_name)
-                else:
-                    util.exception(f"Wrong classification model {args.classi_model}")
+            # logistic regression classificator
+            elif args.classi_model == "logreg":
+                clf = log_reg.training_Logistic_Regression(Y_train, filename)
+
+            # decision tree classificator
+            elif args.classi_model == "dectree":
+                clf = decision_tree.training_Decision_Tree(Y_train, filename)
+
+            else:
+                util.exception(f"Wrong classification model {args.classi_model}")
+
+            # test classificator
+            if args.model_type == 'bow':
+                model_methods.testing_classificator_with_bow(clf, review_dict, X_test, Y_test)
+
+            elif args.model_type == 'tfidf':
+                model_methods.testing_classificator_with_tfidf(clf, tfidf_model, review_dict, X_test, Y_test)
+
+        # if neural network
+        else:
+            max_sen_len = df_sentiment.tokens.map(len).max()
+            if df_test is not None:
+                max_sen_len_test = df_test.tokens.map(len).max()
+                max_sen_len = max(max_sen_len, max_sen_len_test)
+
+            # lstm classificator
+            if args.classi_model == "lstm":
+                lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train,
+                                                binary, is_fasttext,
+                                                batch_size=1, model_filename_train=model_filename_train,
+                                                model_filename_test=model_filename_test)
+                lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext,
+                                  category_name)
+
+            # cnn classificator
+            elif args.classi_model == "cnn":
+                cnn_model = cnn.training_CNN(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len, X_train, Y_train,
+                                         is_fasttext, binary, padding=True, model_filename_test=model_filename_test)
+                cnn.testing_CNN(cnn_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext, category_name)
+            else:
+                util.exception(f"Wrong classification model {args.classi_model}")
 
 
 
@@ -466,7 +465,7 @@ def main():
 
     classes = reviews_df.columns[1:10]
 
-    trans_method, filename = "orto1", constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}_muj.txt"
+    trans_method, filename = "orto", constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}_muj.txt"
     model_tuple = load_models_and_trans_matrix(args, trans_method, filename)
 
     classification_sentiments_annotated(reviews_df, reviews_test_df, classes, model_tuple, args)

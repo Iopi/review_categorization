@@ -2,6 +2,7 @@ import os
 import pickle
 
 import pandas as pd
+import torch
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from enums.language_enum import Language
@@ -470,9 +471,9 @@ class Ui_MainWindow(object):
     def load_models(self, classifier_method, category_name, train_reviews, trans_matrix, target_model,
                     sent_language, target_language, max_sen_len):
         if classifier_method == "lstm":
-            models_filename = f"{constants.CLASSIFIER_LSTM}{category_name}_{target_language}_{sent_language}.bin"
+            models_filename = f"{constants.CLASSIFIER_LSTM}{category_name}_{self.device}_{target_language}_{sent_language}.bin"
         elif classifier_method == "cnn":
-            models_filename = f"{constants.CLASSIFIER_CNN}{category_name}_{target_language}_{sent_language}.bin"
+            models_filename = f"{constants.CLASSIFIER_CNN}{category_name}_{self.device}_{target_language}_{sent_language}.bin"
         else:
             util.exception(f"Unknown classifier method {classifier_method}")
 

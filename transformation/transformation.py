@@ -71,49 +71,8 @@ def compute_transform_matrix_regression(target_model, source_model, filename):
 
         trans_matrix = np.dot(trans_matrix_1, trans_matrix_2)
 
-        # x = np.dot(trans_matrix, vec_s)
-        # print(vec_t[:10])
-        # print(x[:10])
-        # print(cosine_similarity(x[:5], vec_t[:5]))
-        # print(cosine_similarity(x[:10], vec_t[:10]))
-        # print(cosine_similarity(x, vec_t))
     return trans_matrix.T
 
-
-def compute_transform_matrix_regression2(target_model, source_model, filename):
-    with open(filename, encoding="utf-8") as f:
-        matrix_t = None
-        matrix_s = None
-        for line in f:
-            line = line.rstrip()
-            wt, ws = line.split()
-            try:
-                vec_t = target_model[wt]
-                vec_s = source_model[ws]
-            except:
-                continue
-
-            if matrix_t is None:
-                matrix_t = vec_t
-                matrix_s = vec_s
-            else:
-                matrix_t = np.vstack((matrix_t, vec_t))
-                matrix_s = np.vstack((matrix_s, vec_s))
-
-        from scipy.linalg import lstsq
-
-        # Přidání sloupce jedniček k původním vektorům v jazyce A pro zahrnutí prahu do transformace
-        # matrix_t = np.hstack((matrix_t, np.ones((matrix_t.shape[0], 1))))
-
-        # Vytvoření transformační matice pomocí metody nejmenších čtverců
-        W, _, _, _ = lstsq(matrix_t, matrix_s)
-
-        # Transformace vektoru z jazyka A do jazyka B
-        # X_A_transformed = np.dot(vec_s, W)
-        # print(cosine_similarity(X_A_transformed, vec_t))
-        # X_A_transformed = np.dot(W, vec_s)
-        # print(cosine_similarity(X_A_transformed, vec_t))
-        return W
 
 def compute_transform_matrix_orthogonal(target_model, source_model, filename):
     with open(filename, encoding="utf-8") as f:
@@ -142,38 +101,6 @@ def compute_transform_matrix_orthogonal(target_model, source_model, filename):
         V = V_T.T[:, :len(s)]
         U_T = U.T
         trans_matrix = np.dot(V, U_T)
-        # x = np.dot(trans_matrix.T, vec_s)
-        # print(vec_t[:10])
-        # print(x[:10])
-        # print(cosine_similarity(x[:5], vec_t[:5]))
-        # print(cosine_similarity(x[:10], vec_t[:10]))
-        # print(cosine_similarity(x, vec_t))
-    return trans_matrix.T
-
-def compute_transform_matrix_orthogonal2(target_model, source_model, filename):
-    with open(filename, encoding="utf-8") as f:
-        matrix_t = None
-        matrix_s = None
-        for line in f:
-            line = line.rstrip()
-            wt, ws = line.split()
-            try:
-                vec_t = target_model[wt]
-                vec_s = source_model[ws]
-            except:
-                continue
-
-            if matrix_t is None:
-                matrix_t = vec_t
-                matrix_s = vec_s
-            else:
-                matrix_t = np.vstack((matrix_t, vec_t))
-                matrix_s = np.vstack((matrix_s, vec_s))
-
-        from scipy.linalg import orthogonal_procrustes
-
-        trans_matrix, _ = orthogonal_procrustes(matrix_s, matrix_t)
-
     return trans_matrix.T
 
 def compute_transform_matrix_procrustes_analysis(target_model, source_model, filename):
@@ -214,8 +141,6 @@ def compute_transform_matrix_procrustes_analysis(target_model, source_model, fil
         print(cosine_similarity(x, vec_t))
 
     return Z.T
-
-
 
 
 def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, trans_method, filename):
@@ -293,14 +218,10 @@ def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, 
     # trans_matrix = compute_transform_matrix_regression2(vec_model_train, vec_model_test, filename)
     # eval_similarity(vec_model_train, vec_model_test, target_lang, source_lang, trans_matrix)
 
-    if trans_method == "orto1":
+    if trans_method == "orto":
         trans_matrix = compute_transform_matrix_orthogonal(vec_model_train, vec_model_test, filename)
-    elif trans_method == "orto2":
-        trans_matrix = compute_transform_matrix_orthogonal2(vec_model_train, vec_model_test, filename)
-    elif trans_method == "regr1":
+    elif trans_method == "regr":
         trans_matrix = compute_transform_matrix_regression(vec_model_train, vec_model_test, filename)
-    elif trans_method == "regr2":
-        trans_matrix = compute_transform_matrix_regression2(vec_model_train, vec_model_test, filename)
     else:
         util.exception(f"Unknown transform matrix method {trans_method}")
 
