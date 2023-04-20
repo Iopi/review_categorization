@@ -263,6 +263,11 @@ def create_unsup_lower_split_model(args):
 
 def create_lower_split_model(args):
     top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
+
+    # top_data_df_2 = pd.read_excel("data/feed/feed_en_2.xlsx", sheet_name="Sheet1")
+    # top_data_df = pd.concat([top_data_df, top_data_df_2], axis=0)
+    # top_data_df = top_data_df.reset_index(drop=True)
+
     # lowercase and split .,?!
     result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=False)
     preprocessing_methods.remove_bad_words(result, args.lang)
