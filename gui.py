@@ -1,17 +1,15 @@
 import os
 import pickle
 
-import pandas as pd
-import torch
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from enums.language_enum import Language
-from preprocessing import preprocessing_methods
-from models.saved_model import SavedModels
-import util
-from models.classifier_model import Classifier
 import constants
+import util
+from enums.language_enum import Language
 from enums.sentiment_enum import Sentiment
+from models.classifier_model import Classifier
+from models.saved_model import SavedModels
+from preprocessing import preprocessing_methods
 
 
 class Ui_MainWindow(object):
@@ -486,7 +484,7 @@ class Ui_MainWindow(object):
             self.label_3.setText(f"Training {classifier_method} - existence for category {category_name}...")
             self.label_3.repaint()
             temp_data = train_reviews.copy()
-            preprocessing_methods.map_annotated(temp_data)
+            preprocessing_methods.map_category_existence(temp_data)
             classifier = Classifier(classifier_method)
             classifier.category_models['existence'] = classifier.train_model(classifier_method, temp_data,
                                                                              trans_matrix, target_model,

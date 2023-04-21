@@ -1,12 +1,10 @@
-import pandas as pd
-from gensim.models import KeyedVectors
-
-from enums.language_enum import Language
 import constants
-from transformation import transformation
+import pandas as pd
 import util
-
+from enums.language_enum import Language
+from gensim.models import KeyedVectors
 from preprocessing import preprocessing_methods
+from transformation import transformation
 
 
 class SavedModels:
@@ -71,7 +69,8 @@ class SavedModels:
                                                                               dict_filename)
                 return self.trans_matrix_cs_de
 
-        util.exception(f"Not found transformation method for target language {target_lang} and source language {source_lang}.")
+        util.exception(
+            f"Not found transformation method for target language {target_lang} and source language {source_lang}.")
 
     def load_reviews(self, lang):
         if lang == Language.CZECH.value:

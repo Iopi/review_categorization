@@ -1,7 +1,5 @@
-import constants
 import util
 from classifires import lstm
-from models import saved_model
 
 
 class Classifier:
@@ -10,14 +8,6 @@ class Classifier:
         self.category_models = dict()
         self.category_models['existence'] = None
         self.category_models['sentiment'] = None
-        # self.prepare_categories()
-
-
-    #     for category in constants.CATEGORIES:
-    #         self.categories[category] = dict()
-    #         self.categories[category]['existence'] = None
-    #         self.categories[categ
-    # def prepare_categories(self)ory]['sentiment'] = None
 
     def train_model(self, classifier_method, train_reviews, trans_matrix, target_model, device, source_lang,
                     target_lang, category_name, max_sen_len, models):
@@ -45,4 +35,3 @@ class Classifier:
 
         else:
             util.exception(f"Unknown classifier method {classifier_method}")
-

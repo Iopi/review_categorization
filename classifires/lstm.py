@@ -1,32 +1,24 @@
+import constants
+import gensim
 import numpy as np
+import torch
 import torch.nn as nn
+import util
 from gensim.models import KeyedVectors
-from matplotlib import pyplot as plt
+from models import model_methods
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-import gensim
-import torch
 from torch.utils.data import TensorDataset, DataLoader
-
-import constants
-import util
-from models import model_methods
 
 
 class LongShortTermMemory(nn.Module):
-    def __init__(self, device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
+    def __init__(self, device, no_layers, hidden_dim, output_dim, drop_prob=0.5,
                  model_filename_train=None, model_filename_test=None, trans_matrix=None):
         super(LongShortTermMemory, self).__init__()
 
         self.output_dim = output_dim
         self.hidden_dim = hidden_dim
-
         self.no_layers = no_layers
-        # self.vocab_size = vocab_size
-
-        # embedding and LSTM layers
-        # self.embedding = nn.Embedding(vocab_size, embedding_dim)
 
         vec_model_train = gensim.models.KeyedVectors.load(model_filename_train)
         weights_train = vec_model_train.wv
@@ -39,24 +31,16 @@ class LongShortTermMemory(nn.Module):
             self.embedding_test = nn.Embedding.from_pretrained(torch.FloatTensor(weights_test.vectors))
         else:
             self.embedding_test = self.embedding_train
-        # self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(weights.vectors),
-        #                                                   padding_idx=vec_model.wv.key_to_index['pad'])
 
-        # lstm
-        # self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=self.hidden_dim,
-        #                     num_layers=no_layers, batch_first=True)
         self.lstm = nn.LSTM(input_size=weights_train.vector_size, hidden_size=self.hidden_dim,
                             num_layers=no_layers, batch_first=True)
-        # (input_size=embedding_dim, hidden_size=self.hidden_dim,
-        #                             num_layers=no_layers, batch_first=True)
 
         # dropout layer
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(drop_prob)
 
         # linear and sigmoid layer
         self.fc = nn.Linear(self.hidden_dim, output_dim)
         self.sig = nn.Sigmoid()
-        self.sig2 = nn.Softmax()
 
         self.trans_matrix = None if trans_matrix is None else torch.from_numpy(trans_matrix).float().to(device)
 
@@ -64,34 +48,23 @@ class LongShortTermMemory(nn.Module):
         batch_size = x.size(0)
         # embeddings and lstm_out
         if train_input:
-            embeds = self.embedding_train(x)  # shape: B x S x Feature   since batch = True
+            embeds = self.embedding_train(x)
         else:
-            embeds = self.embedding_test(x)  # shape: B x S x Feature   since batch = True
+            embeds = self.embedding_test(x)
             if self.trans_matrix is not None:
                 for i in range(len(embeds)):
                     embeds[i] = torch.matmul(self.trans_matrix, embeds[i].T).T
 
-        # print(embeds.shape)  #[50, 500, 1000]
         lstm_out, hidden = self.lstm(embeds, hidden)
-
         lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim)
-
         # dropout and fully connected layer
         out = self.dropout(lstm_out)
         out = self.fc(out)
-
         # sigmoid function
         sig_out = self.sig(out)
-
-        # sig_out2 = self.sig2(out)
-        # sig_out2 = sig_out2.view(batch_size, -1)
-        # sig_out2 = sig_out2[:, -1]
-
         # reshape to be batch_size first
         sig_out = sig_out.view(batch_size, -1)
-        #
         sig_out = sig_out[:, -1]  # get last batch of labels
-        # sig_out = out[:, -1]  # get last batch of labels
 
         # return last sigmoid output and hidden state
         return sig_out, hidden
@@ -106,7 +79,7 @@ class LongShortTermMemory(nn.Module):
         return hidden
 
 
-def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, binary, is_fasttext,
+def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, is_fasttext,
                   batch_size=1, model_filename_train=None, model_filename_test=None):
     X_train = [model_methods.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in X_train]
     X_train = np.array(X_train)
@@ -119,26 +92,18 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
     valid_loader = DataLoader(valid_data, shuffle=True, batch_size=batch_size)
 
     no_layers = 2
-    # vocab_size = len(vocab) + 1  # extra 1 for padding
-    embedding_dim = 64
     output_dim = 3
     hidden_dim = 256
 
-    lstm_model = LongShortTermMemory(device, no_layers, hidden_dim, output_dim, embedding_dim, drop_prob=0.5,
+    lstm_model = LongShortTermMemory(device, no_layers, hidden_dim, output_dim, drop_prob=0.5,
                                      model_filename_train=model_filename_train,
                                      model_filename_test=model_filename_test,
                                      trans_matrix=trans_matrix)
 
-    # moving to gpu
+    # moving to device
     lstm_model.to(device)
 
-    # loss and optimization functions
-    lr = 0.001     # default 0.001
-    # if binary:
-    #     criterion = nn.BCELoss()
-    # else:
-    #     criterion = nn.CrossEntropyLoss()
-    # criterion = nn.CrossEntropyLoss()
+    lr = 0.001
     criterion = nn.BCELoss()
 
     optimizer = torch.optim.Adam(lstm_model.parameters(), lr=lr)
@@ -208,51 +173,26 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
         epoch_vl_loss.append(epoch_val_loss)
         epoch_tr_acc.append(epoch_train_acc)
         epoch_vl_acc.append(epoch_val_acc)
-        # print(f'Epoch {epoch + 1}')
-        # print(f'train_loss : {epoch_train_loss} val_loss : {epoch_val_loss}')
-        # print(f'train_accuracy : {epoch_train_acc * 100} val_accuracy : {epoch_val_acc * 100}')
+
         if epoch_val_loss <= valid_loss_min:
             torch.save(lstm_model.state_dict(), constants.DATA_FOLDER + 'state_dict.pt')
-            # print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min,
-            #                                                                                 epoch_val_loss))
             valid_loss_min = epoch_val_loss
-        # print(25 * '==')
-
-    fig = plt.figure(figsize=(20, 6))
-    plt.subplot(1, 2, 1)
-    plt.plot(epoch_tr_acc, label='Train Acc')
-    plt.plot(epoch_vl_acc, label='Validation Acc')
-    plt.title("Accuracy")
-    plt.legend()
-    plt.grid()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(epoch_tr_loss, label='Train loss')
-    plt.plot(epoch_vl_loss, label='Validation loss')
-    plt.title("Loss")
-    plt.legend()
-    plt.grid()
-
-    # plt.show()
 
     return lstm_model
 
 
-def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext, category_name):
+def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext):
     bow_cnn_predictions = []
     lstm_model.eval()
     with torch.no_grad():
         i = 0
         for tags in X_test:
-            # print(text)
-            # tokens = simple_preprocess(text, deacc=True)
-            # tags = [czech_stemmer.cz_stem(word) for word in tokens]
             vec = model_methods.make_vector_index_map(vec_model_test, tags, max_sen_len, is_fasttext)
 
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)
             inputs = torch.from_numpy(inputs).to(device)
-            batch_size=1
+            batch_size = 1
             h = lstm_model.init_hidden(batch_size, device)
             h = tuple([each.data for each in h])
             output, h = lstm_model(inputs, h, False)
@@ -261,7 +201,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
             else:
                 bow_cnn_predictions.append(1)
             i += 1
-    # util.print_metrics(Y_test_sentiment, bow_cnn_predictions, category_name)
+    # compare with true labels and print result
     util.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
 
 
