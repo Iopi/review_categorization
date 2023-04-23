@@ -3,6 +3,7 @@ SW_FOLDER = 'data/stopwords/'
 DICT_FOLDER = 'data/dictionary/'
 CREATE_MODEL = False
 MODEL_FOLDER = 'data/vec_model/'
+CLASSIFIER_FOLDER = 'data/saved_classifiers/'
 
 CATEGORIES = ['General', 'Food', 'Drink', 'Staff', 'Speed', 'Cleanness', 'Prices', 'Environment', 'Occupancy']
 
@@ -16,4 +17,3 @@ DEFAULT_REVIEWS_EN = 'data/review/reviews_en.xlsx'
 DEFAULT_REVIEWS_DE = 'data/review/reviews_de.xlsx'
 
 CLASSIFIER_LSTM = 'data/saved_classifiers/lstm_models_'
-CLASSIFIER_CNN = 'data/saved_classifiers/cnn_models_'

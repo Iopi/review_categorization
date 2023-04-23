@@ -8,7 +8,7 @@ from transformation import transformation
 
 
 class SavedModels:
-    def __init__(self, lang):
+    def __init__(self):
         self.czech_model = None
         self.english_model = None
         self.german_model = None
