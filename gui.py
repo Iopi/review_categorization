@@ -311,7 +311,7 @@ class Ui_MainWindow(object):
 
         # transform matrix computing
         trans_matrix = None
-        transform_method = "orto1"
+        transform_method = "orto"
         if Language[sent_language].value != Language[target_language].value:
             self.label_3.setText("Transformation matrix computing...")
             self.label_3.repaint()
@@ -335,12 +335,12 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "Sentence:"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Customer feedback categorization demonstrator"))
+        self.label.setText(_translate("MainWindow", "Text:"))
         self.language_combo_box.setItemText(0, _translate("MainWindow", "czech"))
         self.language_combo_box.setItemText(1, _translate("MainWindow", "english"))
         self.language_combo_box.setItemText(2, _translate("MainWindow", "german"))
-        self.label_2.setText(_translate("MainWindow", "Language of sentence:"))
+        self.label_2.setText(_translate("MainWindow", "Language of text:"))
         self.run_button.setText(_translate("MainWindow", "Run"))
         # self.save_button.setText(_translate("MainWindow", "Save"))
         item = self.result_table.verticalHeaderItem(0)
