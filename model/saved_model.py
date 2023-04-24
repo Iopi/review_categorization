@@ -1,10 +1,9 @@
 import constants
 import pandas as pd
 import util
-from enums.language_enum import Language
+from model.enums.language_enum import Language
 from gensim.models import KeyedVectors
-from preprocessing import preprocessing_methods
-from transformation import transformation
+from controller import preprocessing, transformation
 
 
 class SavedModels:
@@ -77,8 +76,8 @@ class SavedModels:
             if self.reviews_cs is None:
                 self.reviews_cs = pd.read_excel(constants.DEFAULT_REVIEWS_CS, sheet_name="Sheet1")
                 self.reviews_cs = self.reviews_cs.dropna(thresh=4)
-                self.reviews_cs['tokens'] = preprocessing_methods.lower_split(self.reviews_cs, lang)
-                preprocessing_methods.remove_bad_words(self.reviews_cs['tokens'], lang)
+                self.reviews_cs['tokens'] = preprocessing.lower_split(self.reviews_cs, lang)
+                preprocessing.remove_bad_words(self.reviews_cs['tokens'], lang)
                 self.reviews_cs = self.reviews_cs[self.reviews_cs['tokens'].apply(lambda x: x != [''])]
             return self.reviews_cs
 
@@ -86,8 +85,8 @@ class SavedModels:
             if self.reviews_en is None:
                 self.reviews_en = pd.read_excel(constants.DEFAULT_REVIEWS_EN, sheet_name="Sheet1")
                 self.reviews_en = self.reviews_en.dropna(thresh=4)
-                self.reviews_en['tokens'] = preprocessing_methods.lower_split(self.reviews_en, lang)
-                preprocessing_methods.remove_bad_words(self.reviews_en['tokens'], lang)
+                self.reviews_en['tokens'] = preprocessing.lower_split(self.reviews_en, lang)
+                preprocessing.remove_bad_words(self.reviews_en['tokens'], lang)
                 self.reviews_en = self.reviews_en[self.reviews_en['tokens'].apply(lambda x: x != [''])]
             return self.reviews_en
 
@@ -95,8 +94,8 @@ class SavedModels:
             if self.reviews_de is None:
                 self.reviews_de = pd.read_excel(constants.DEFAULT_REVIEWS_DE, sheet_name="Sheet1")
                 self.reviews_de = self.reviews_de.dropna(thresh=4)
-                self.reviews_de['tokens'] = preprocessing_methods.lower_split(self.reviews_de, lang)
-                preprocessing_methods.remove_bad_words(self.reviews_de['tokens'], lang)
+                self.reviews_de['tokens'] = preprocessing.lower_split(self.reviews_de, lang)
+                preprocessing.remove_bad_words(self.reviews_de['tokens'], lang)
                 self.reviews_de = self.reviews_de[self.reviews_de['tokens'].apply(lambda x: x != [''])]
             return self.reviews_de
 

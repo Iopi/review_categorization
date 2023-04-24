@@ -1,14 +1,16 @@
-import constants
 import gensim
 import numpy as np
 import torch
 import torch.nn as nn
-import util
 from gensim.models import KeyedVectors
-from models import model_methods
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
+
+import constants
+import util
+from controller import vector_reprezentation
+
 
 
 class LongShortTermMemory(nn.Module):
@@ -187,7 +189,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
     with torch.no_grad():
         i = 0
         for tags in X_test:
-            vec = model_methods.make_vector_index_map(vec_model_test, tags, max_sen_len, is_fasttext)
+            vec = vector_reprezentation.make_vector_index_map(vec_model_test, tags, max_sen_len, is_fasttext)
 
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)
@@ -208,7 +210,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
 def classifie_LSTM(lstm_model, source_model, device, max_sen_len, words, is_fasttext=True):
     lstm_model.eval()
     with torch.no_grad():
-        vec = model_methods.make_vector_index_map(source_model, words, max_sen_len, is_fasttext)
+        vec = vector_reprezentation.make_vector_index_map(source_model, words, max_sen_len, is_fasttext)
 
         inputs = np.expand_dims(vec, axis=0)
         torch.from_numpy(inputs).float().to(device)

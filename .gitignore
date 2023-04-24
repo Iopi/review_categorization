@@ -1,7 +1,7 @@
 */__pycache__
 /__pycache__
 .idea
-/results
 /venv
-*.log
+/data/saved_classifiers
+log.txt
 *.ftz

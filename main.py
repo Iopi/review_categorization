@@ -6,10 +6,8 @@ from gensim.models import KeyedVectors
 
 import constants
 import util
-from classifires import lstm, cnn, svm, log_reg, decision_tree
-from models import model_methods
-from preprocessing import preprocessing_methods
-from transformation import transformation
+from model.classifires import svm, lstm, cnn, log_reg, decision_tree
+from controller import preprocessing, transformation, vector_reprezentation
 
 
 def parse_agrs():
@@ -115,10 +113,12 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
 
         # Call the train_test_split
         if test_data_df is None:
-            X_train, X_test, Y_train, Y_test = preprocessing_methods.split_train_test(df_sentiment, category_name,
+            X_train, X_test, Y_train, Y_test = preprocessing.split_train_test(df_sentiment, category_name,
                                                                                       test_size=0.20)
         else:
             df_test = test_data_df[test_data_df[category_name] != 2]
+
+            util.sentiment_count(df_test, category_name)
 
             X_train = df_sentiment['tokens']
             Y_train = df_sentiment[category_name]
@@ -131,18 +131,18 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
             clf = None
             filename = None
             tfidf_model = None
-            review_dict = model_methods.make_dict(df_sentiment, padding=False)
+            review_dict = vector_reprezentation.make_dict(df_sentiment, padding=False)
             # create text representation
             # bag of words vector representation
             if args.model_type == 'bow':
                 filename = constants.MODEL_FOLDER + 'train_review_bow.csv'
-                model_methods.create_bow_model_file(review_dict, df_sentiment, X_train, filename)
+                vector_reprezentation.create_bow_model_file(review_dict, df_sentiment, X_train, filename)
                 clf = decision_tree.training_Decision_Tree(Y_train, filename)
 
             # tf-idf vector representation
             elif args.model_type == 'tfidf':
                 filename = constants.MODEL_FOLDER + 'train_review_tfidf.csv'
-                tfidf_model = model_methods.create_tfidf_model_file(review_dict, df_sentiment, X_train, filename)
+                tfidf_model = vector_reprezentation.create_tfidf_model_file(review_dict, df_sentiment, X_train, filename)
             else:
                 util.exception(f"Wrong model type {args.model_type}")
 
@@ -164,10 +164,10 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
 
             # test classificator
             if args.model_type == 'bow':
-                model_methods.testing_classificator_with_bow(clf, review_dict, X_test, Y_test)
+                vector_reprezentation.testing_classificator_with_bow(clf, review_dict, X_test, Y_test)
 
             elif args.model_type == 'tfidf':
-                model_methods.testing_classificator_with_tfidf(clf, tfidf_model, review_dict, X_test, Y_test)
+                vector_reprezentation.testing_classificator_with_tfidf(clf, tfidf_model, review_dict, X_test, Y_test)
 
         # if neural network
         else:
@@ -202,10 +202,10 @@ def classification_category_existence(reviews_df, reviews_test_df, classes, mode
     # annotated 1, not annotated 0
     util.output("Annotated 1, not annotated 0")
     temp_data = reviews_df.copy()
-    preprocessing_methods.map_category_existence(temp_data)
+    preprocessing.map_category_existence(temp_data)
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
-        preprocessing_methods.map_category_existence(temp_data_test)
+        preprocessing.map_category_existence(temp_data_test)
         classification_sentiments(temp_data, classes, model_tuple, args, temp_data_test)
     else:
         classification_sentiments(temp_data, classes, model_tuple, args)
@@ -215,10 +215,10 @@ def classification_sentiment(reviews_df, reviews_test_df, classes, model_tuple, 
     # positive 1, negative 0
     util.output("Positive 1, negative 0")
     temp_data = reviews_df.copy()
-    preprocessing_methods.map_sentiment(temp_data)
+    preprocessing.map_sentiment(temp_data)
     if reviews_test_df is not None:
         temp_data_test = reviews_test_df.copy()
-        preprocessing_methods.map_sentiment(temp_data_test)
+        preprocessing.map_sentiment(temp_data_test)
         classification_sentiments(temp_data, classes, model_tuple, args, temp_data_test)
     else:
         classification_sentiments(temp_data, classes, model_tuple, args)
@@ -259,33 +259,33 @@ def main():
     reviews_test_df = None
     # only creating model
     if args.action == 'model':
-        model_methods.create_lower_split_model(args)
+        vector_reprezentation.create_lower_split_model(args)
         exit(0)
     elif args.action == 'cross' or args.action == 'translate' or args.action == 'monotest':
         reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1")
         reviews_test_df = reviews_test_df.dropna(thresh=4)
         if args.action == 'translate':
-            preprocessing_methods.translate_data(reviews_test_df, args.lang_test, args.lang)
-            reviews_test_df['tokens'] = preprocessing_methods.lower_split(reviews_test_df, args.lang)
-            preprocessing_methods.remove_bad_words(reviews_test_df['tokens'], args.lang)
+            preprocessing.translate_data(reviews_test_df, args.lang_test, args.lang)
+            reviews_test_df['tokens'] = preprocessing.lower_split(reviews_test_df, args.lang)
+            preprocessing.remove_bad_words(reviews_test_df['tokens'], args.lang)
 
         else:
-            reviews_test_df['tokens'] = preprocessing_methods.lower_split(reviews_test_df, args.lang_test)
-            preprocessing_methods.remove_bad_words(reviews_test_df['tokens'], args.lang_test)
+            reviews_test_df['tokens'] = preprocessing.lower_split(reviews_test_df, args.lang_test)
+            preprocessing.remove_bad_words(reviews_test_df['tokens'], args.lang_test)
 
         reviews_test_df = reviews_test_df[reviews_test_df['tokens'].apply(lambda x: x != [''])]
 
     reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
     reviews_df = reviews_df.dropna(thresh=4)
 
-    reviews_df['tokens'] = preprocessing_methods.lower_split(reviews_df, args.lang)
-    preprocessing_methods.remove_bad_words(reviews_df['tokens'], args.lang)
+    reviews_df['tokens'] = preprocessing.lower_split(reviews_df, args.lang)
+    preprocessing.remove_bad_words(reviews_df['tokens'], args.lang)
     reviews_df = reviews_df[reviews_df['tokens'].apply(lambda x: x != [''])]
 
     classes = reviews_df.columns[1:10]
 
-    trans_method, filename = "orto", constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}_muj.txt"
-    model_tuple = load_models_and_trans_matrix(args, trans_method, filename)
+    dict_path = constants.DICT_FOLDER + f"{args.lang}-{args.lang_test}.txt"
+    model_tuple = load_models_and_trans_matrix(args, constants.DEFAULT_TRANS_METHOD, dict_path)
 
     classification_category_existence(reviews_df, reviews_test_df, classes, model_tuple, args)
     classification_sentiment(reviews_df, reviews_test_df, classes, model_tuple, args)

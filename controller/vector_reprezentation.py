@@ -1,25 +1,22 @@
-import constants
 import gensim
 import pandas as pd
 import torch
-import util
 from gensim import corpora
 from gensim.models import FastText
 from gensim.models import TfidfModel
 from gensim.models import Word2Vec
-from preprocessing import preprocessing_methods
 from sklearn.metrics import classification_report
+
+import constants
+import util
+from controller import preprocessing
+
 
 
 def create_lower_split_model(args):
     top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
-
-    # top_data_df_2 = pd.read_excel("data/feed/feed_en_2.xlsx", sheet_name="Sheet1")
-    # top_data_df = pd.concat([top_data_df, top_data_df_2], axis=0)
-    # top_data_df = top_data_df.reset_index(drop=True)
-
-    result = preprocessing_methods.lower_split(top_data_df, args.lang, check_lang=False)
-    preprocessing_methods.remove_bad_words(result, args.lang)
+    result = preprocessing.lower_split(top_data_df, args.lang, check_lang=False)
+    preprocessing.remove_bad_words(result, args.lang)
     len_before = len(result)
     result = [x for x in result if x != ['']]
     len_after = len(result)

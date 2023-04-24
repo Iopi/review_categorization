@@ -2,10 +2,11 @@ import gensim
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import util
-from models import model_methods
 from sklearn.metrics import classification_report
 from torch import optim
+
+import util
+from controller import vector_reprezentation
 
 EMBEDDING_SIZE = 500
 NUM_FILTERS = 10
@@ -87,7 +88,7 @@ def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_tra
         train_loss = 0
         for index, row in X_train.items():
             cnn_model.zero_grad()
-            bow_vec = model_methods.make_vector_index_map_cnn(model, row, device, max_sen_len, is_fasttext)
+            bow_vec = vector_reprezentation.make_vector_index_map_cnn(model, row, device, max_sen_len, is_fasttext)
             # Forward pass to get probability of positive sentiment
             probs = cnn_model(bow_vec, True)
             # get label
@@ -110,7 +111,7 @@ def testing_CNN(cnn_model, vec_model, device, max_sen_len, X_test, Y_test_sentim
 
     with torch.no_grad():
         for index, row in X_test.items():
-            bow_vec = model_methods.make_vector_index_map_cnn(vec_model, row, device, max_sen_len, is_fasttext)
+            bow_vec = vector_reprezentation.make_vector_index_map_cnn(vec_model, row, device, max_sen_len, is_fasttext)
             probs = cnn_model(bow_vec, False)
             _, predicted = torch.max(probs.data, 1)
             bow_cnn_predictions.append(predicted.cpu().numpy()[0])

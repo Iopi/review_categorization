@@ -5,15 +5,20 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import constants
 import util
-from enums.language_enum import Language
-from enums.sentiment_enum import Sentiment
-from models.classifier_model import Classifier
-from models.saved_model import SavedModels
-from preprocessing import preprocessing_methods
+from model.enums.language_enum import Language
+from model.enums.sentiment_enum import Sentiment
+from model.classifier_model import Classifier
+from model.saved_model import SavedModels
+from controller import preprocessing
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
+        '''
+        Set up of user interface
+        :param MainWindow: Main window of ui
+        :return:
+        '''
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
         MainWindow.resize(818, 473)
@@ -278,6 +283,11 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def run_classification(self):
+        '''
+        Action after trigger run button.
+        Runs the classification.
+        :return:
+        '''
         self.clean_table()
         # sentence preprocessing
         sentence = self.sentence_text_edit.toPlainText()
@@ -307,8 +317,8 @@ class Ui_MainWindow(object):
 
         # transform matrix computing
         trans_matrix = None
-        transform_method = "orto"
         if Language[sent_language].value != Language[target_language].value:
+            transform_method = constants.DEFAULT_TRANS_METHOD
             self.label_3.setText("Transformation matrix computing...")
             self.label_3.repaint()
             trans_matrix = self.models.compute_transform_matrix(transform_method, Language[target_language].value,
@@ -321,15 +331,31 @@ class Ui_MainWindow(object):
         self.label_3.repaint()
 
     def save_classifier(self, filename, classifier):
+        '''
+        Save classifier object to file
+        :param filename: filename of saving file
+        :param classifier: classifier object to be saved
+        :return:
+        '''
         with open(filename, 'wb') as f:
             pickle.dump(classifier, f)
 
     def load_classifier(self, filename):
+        '''
+        Load classifier object from file
+        :param filename: filename of loading file
+        :return:
+        '''
         with open(filename, 'rb') as f:
             classifier = pickle.load(f)
         return classifier
 
     def retranslateUi(self, MainWindow):
+        '''
+        Specifies component names
+        :param MainWindow: Main window of ui
+        :return:
+        '''
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Customer feedback categorization demonstrator"))
         self.label.setText(_translate("MainWindow", "Text:"))
@@ -402,6 +428,18 @@ class Ui_MainWindow(object):
 
     def classification_process(self, classifier_method, train_reviews, trans_matrix, target_model, source_model,
                                sent_language, target_language, words):
+        '''
+
+        :param classifier_method:
+        :param train_reviews:
+        :param trans_matrix:
+        :param target_model:
+        :param source_model:
+        :param sent_language:
+        :param target_language:
+        :param words:
+        :return:
+        '''
         index = 0
         max_sen_len = train_reviews.tokens.map(len).max()
         if len(words) > max_sen_len:
@@ -420,7 +458,7 @@ class Ui_MainWindow(object):
                                            classifier.category_models['existence'], source_model, self.device,
                                            max_sen_len, words)
 
-            if result >= 0.5:  # 0.5
+            if result >= 0.5:
 
                 self.label_3.setText(f"Classification for category {constants.CATEGORIES[index]}...")
                 self.label_3.repaint()

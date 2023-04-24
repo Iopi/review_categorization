@@ -209,3 +209,91 @@ def print_info(args, is_fasttext):
             exception(f"Wrong classification model {args.classi_model}")
 
     output(info)
+
+def compare_reviews(filename_1, filename_2, n_rows):
+    reviews_1 = pd.read_excel(filename_1, sheet_name="Sheet1", nrows=n_rows)
+    reviews_2 = pd.read_excel(filename_2, sheet_name="Sheet1", nrows=n_rows)
+    categories = reviews_1.columns[1:10]
+
+    for category_name in categories:
+        TP = 0
+        TN = 0
+        FP = 0
+        FN = 0
+
+        for x in range(len(reviews_1[category_name])):
+            label_1 = reviews_1[category_name][x]
+            label_2 = reviews_2[category_name][x]
+
+            if label_1 is not np.NaN:
+                if label_2 is not np.NaN:
+                    TP += 1
+                else:
+                    FP += 1
+            else:
+                if label_2 is not np.NaN:
+                    FN += 1
+                else:
+                    TN += 1
+
+        try:
+            recall = TP / (TP + FN)
+        except ZeroDivisionError:
+            recall = 0
+        try:
+            precision = TP / (TP + FP)
+        except ZeroDivisionError:
+            precision = 0
+        try:
+            accuracy = (TP + TN) / (TP + TN + FP + FN)
+        except ZeroDivisionError:
+            accuracy = 0
+        try:
+            f1score = 2 * precision * recall / (precision + recall)
+        except ZeroDivisionError:
+            f1score = 0
+
+        print(
+            f"{category_name} category compare -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score}")
+        print(f"+ {TP + TN}, - {FP + FN}")
+
+        TP = 0
+        TN = 0
+        FP = 0
+        FN = 0
+
+        for x in range(len(reviews_1[category_name])):
+            label_1 = reviews_1[category_name][x]
+            label_2 = reviews_2[category_name][x]
+
+            if label_1 == "Positive":
+                if label_2 == "Positive":
+                    TP += 1
+                elif label_2 == "Negative":
+                    FP += 1
+            elif label_1 == "Negative":
+                if label_2 == "Positive":
+                    FN += 1
+                elif label_2 == "Negative":
+                    TN += 1
+
+        try:
+            recall = TP / (TP + FN)
+        except ZeroDivisionError:
+            recall = 0
+        try:
+            precision = TP / (TP + FP)
+        except ZeroDivisionError:
+            precision = 0
+        try:
+            accuracy = (TP + TN) / (TP + TN + FP + FN)
+        except ZeroDivisionError:
+            accuracy = 0
+        try:
+            f1score = 2 * precision * recall / (precision + recall)
+        except ZeroDivisionError:
+            f1score = 0
+
+        print(
+            f"{category_name} sentiment compare -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score}")
+        print(f"+ {TP + TN}, - {FP + FN}\n")
