@@ -1,4 +1,4 @@
-import util
+from view import util
 from model.classifires import lstm
 
 

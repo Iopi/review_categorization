@@ -1,7 +1,7 @@
 import re
 
 import constants
-import util
+from view import util
 from easynmt import EasyNMT
 from langdetect import detect_langs
 from sklearn.model_selection import train_test_split

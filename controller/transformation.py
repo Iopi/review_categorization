@@ -2,7 +2,7 @@ import os
 
 import constants
 import numpy as np
-import util
+from view import util
 
 
 def cosine_similarity(vec_a, vec_b):

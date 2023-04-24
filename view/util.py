@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from sklearn.manifold import TSNE
 
 # logger creating
-logging.basicConfig(filename="log.txt",
+logging.basicConfig(filename="../log.txt",
                     format='%(message)s',
                     filemode='w')
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -209,6 +209,7 @@ def print_info(args, is_fasttext):
             exception(f"Wrong classification model {args.classi_model}")
 
     output(info)
+
 
 def compare_reviews(filename_1, filename_2, n_rows):
     reviews_1 = pd.read_excel(filename_1, sheet_name="Sheet1", nrows=n_rows)

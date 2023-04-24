@@ -1,6 +1,6 @@
 import constants
 import pandas as pd
-import util
+from view import util
 from model.enums.language_enum import Language
 from gensim.models import KeyedVectors
 from controller import preprocessing, transformation

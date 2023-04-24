@@ -1,11 +1,10 @@
 import argparse
 import time
-
 import pandas as pd
 from gensim.models import KeyedVectors
 
 import constants
-import util
+from view import util
 from model.classifires import svm, lstm, cnn, log_reg, decision_tree
 from controller import preprocessing, transformation, vector_reprezentation
 

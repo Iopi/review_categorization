@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from sklearn.metrics import classification_report
 from torch import optim
 
-import util
+from view import util
 from controller import vector_reprezentation
 
 EMBEDDING_SIZE = 500

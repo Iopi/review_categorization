@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 
 import constants
-import util
+from view import util
 from controller import vector_reprezentation
 
 

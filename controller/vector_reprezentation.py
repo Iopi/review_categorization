@@ -8,7 +8,7 @@ from gensim.models import Word2Vec
 from sklearn.metrics import classification_report
 
 import constants
-import util
+from view import util
 from controller import preprocessing
 
 
