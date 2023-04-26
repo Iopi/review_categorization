@@ -1,6 +1,6 @@
 import constants
 import pandas as pd
-from view import util
+from view import app_output
 from model.enums.language_enum import Language
 from gensim.models import KeyedVectors
 from controller import preprocessing, transformation
@@ -43,17 +43,17 @@ class SavedModels:
             return self.german_model
 
         else:
-            util.exception(f"Unknown language {lang}")
+            app_output.exception(f"Unknown language {lang}")
 
     def compute_transform_matrix(self, trans_method, target_lang, source_lang):
         dict_filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}_muj.txt"
 
         if Language.CZECH.value == target_lang:
             if self.czech_model is None:
-                util.exception(f"Vector model for czech language not exists.")
+                app_output.exception(f"Vector model for czech language not exists.")
             if Language.ENGLISH.value == source_lang:
                 if self.english_model is None:
-                    util.exception(f"Vector model for english language not exists.")
+                    app_output.exception(f"Vector model for english language not exists.")
                 if self.trans_matrix_cs_en is None:
                     self.trans_matrix_cs_en = transformation.get_trans_matrix(self.czech_model, self.english_model,
                                                                               target_lang, source_lang, trans_method,
@@ -61,14 +61,14 @@ class SavedModels:
                 return self.trans_matrix_cs_en
             elif Language.GERMAN.value == source_lang:
                 if self.german_model is None:
-                    util.exception(f"Vector model for german language not exists.")
+                    app_output.exception(f"Vector model for german language not exists.")
                 if self.trans_matrix_cs_de is None:
                     self.trans_matrix_cs_de = transformation.get_trans_matrix(self.czech_model, self.german_model,
                                                                               target_lang, source_lang, trans_method,
                                                                               dict_filename)
                 return self.trans_matrix_cs_de
 
-        util.exception(
+        app_output.exception(
             f"Not found transformation method for target language {target_lang} and source language {source_lang}.")
 
     def load_reviews(self, lang):
@@ -112,4 +112,4 @@ class SavedModels:
             if self.german_model_filename is not None:
                 return self.german_model_filename
 
-        util.exception(f"Model filename for language {lang} not found.")
+        app_output.exception(f"Model filename for language {lang} not found.")

@@ -1,4 +1,4 @@
-from view import util
+from view import app_output
 from model.classifiers import lstm
 
 
@@ -25,7 +25,7 @@ class Classifier:
                                             model_filename_test=model_filename_source)
             return lstm_model
         else:
-            util.exception(f"Unknown classifier method {classifier_method}")
+            app_output.exception(f"Unknown classifier method {classifier_method}")
 
     def test_model(self, classifier_method, classifier_model, source_model, device, max_sen_len, words):
 
@@ -34,4 +34,4 @@ class Classifier:
             return result.item()
 
         else:
-            util.exception(f"Unknown classifier method {classifier_method}")
+            app_output.exception(f"Unknown classifier method {classifier_method}")

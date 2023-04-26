@@ -2,7 +2,7 @@ import os
 
 import constants
 import numpy as np
-from view import util
+from view import app_output
 
 
 def cosine_similarity(vec_a, vec_b):
@@ -12,7 +12,7 @@ def cosine_similarity(vec_a, vec_b):
 def eval_similarity(target_model, source_model, target_lang, source_lang, trans_matrix):
     filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}_muj.txt"
     if not os.path.exists(filename):
-        util.exception(f"Dictionary {filename} not found.")
+        app_output.exception(f"Dictionary {filename} not found.")
 
     sum = 0
     i = 0
@@ -31,7 +31,7 @@ def eval_similarity(target_model, source_model, target_lang, source_lang, trans_
             i += 1
             sum += simi
 
-    print(f"sum - {sum / i}")
+    app_output.output(f"sum - {sum / i}")
 
 
 def compute_transform_matrix_regression(target_model, source_model, filename):
@@ -101,7 +101,7 @@ def get_trans_matrix(vec_model_train, vec_model_test, target_lang, source_lang, 
     elif trans_method == "regr":
         trans_matrix = compute_transform_matrix_regression(vec_model_train, vec_model_test, filename)
     else:
-        util.exception(f"Unknown transform matrix method {trans_method}")
+        app_output.exception(f"Unknown transform matrix method {trans_method}")
 
     # eval_similarity(vec_model_train, vec_model_test, target_lang, source_lang, trans_matrix)
 

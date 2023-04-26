@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -8,24 +6,7 @@ import torch
 from matplotlib import pyplot as plt
 from sklearn.manifold import TSNE
 
-# logger creating
-logging.basicConfig(filename="../log.txt",
-                    format='%(message)s',
-                    filemode='w')
-logging.getLogger('matplotlib.font_manager').disabled = True
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-
-def output(message):
-    logger.info(message)
-    print(message)
-
-
-def exception(message):
-    logger.exception(f"\nException: {message}")
-    raise Exception(message)
+from view import app_output
 
 
 def plot_distribution(data_df, category_name):
@@ -47,7 +28,7 @@ def sentiment_count(top_data_df, category_name):
     positive_count = np.count_nonzero(values == 1)
     negative_count = np.count_nonzero(values == 0)
 
-    output(
+    app_output.output(
         f"{category_name} - Positive {positive_count} / Negative {negative_count} (sum {positive_count + negative_count})")
 
 
@@ -106,12 +87,12 @@ def plot_top_similar(query_word, model, limit=10, color=['maroon', 'blue']):
 def compute_majority_class(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_values(ascending=False)
     acc = sentiment_values.values[0] / sum(sentiment_values.values)
-    output(f"MC -> accuracy: {acc}")
+    app_output.output(f"MC -> accuracy: {acc}")
 
 
 def print_metrics(true_labels, classified_labels, category_name):
     if len(true_labels) != len(classified_labels):
-        exception("Count of true labels must be same as classified labels.")
+        app_output.exception("Count of true labels must be same as classified labels.")
 
     TP = 0
     TN = 0
@@ -149,14 +130,14 @@ def print_metrics(true_labels, classified_labels, category_name):
         f1score = 0
         f1score2 = 0
 
-    logger.info(
+    app_output.output(
         f"{category_name} -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score} / {f1score2}")
 
 
 def print_similarity(vec_model_train, param):
-    print(param)
+    app_output.output(param)
     ms = vec_model_train.most_similar(param)
-    print(ms)
+    app_output.output(ms)
 
 
 def remove_duplicates(filename):
@@ -165,7 +146,7 @@ def remove_duplicates(filename):
         len_before = len(words)
         words = list(set(words))
         len_after = len(words)
-        print(f"Removed duplicates {len_before - len_after}")
+        app_output.output(f"Removed duplicates {len_before - len_after}")
 
     with open(filename, 'w') as f:
         f.writelines(words)
@@ -179,7 +160,7 @@ def print_info(args, is_fasttext):
         elif args.model_type == 'tfidf':
             info += "Tf-idf - "
         else:
-            exception(f"Wrong model type {args.model_type}")
+            app_output.exception(f"Wrong model type {args.model_type}")
 
         if args.classi_model == "svm":
             info += 'Support vector machines'
@@ -191,7 +172,7 @@ def print_info(args, is_fasttext):
             info += 'Decision tree'
 
         else:
-            exception(f"Wrong classification model {args.classi_model}")
+            app_output.exception(f"Wrong classification model {args.classi_model}")
 
     else:
         if is_fasttext:
@@ -200,13 +181,13 @@ def print_info(args, is_fasttext):
             info += "Word2vec - "
 
         if args.classi_model == "lstm":
-            output(info + "Long short-term memory")
+            app_output.output(info + "Long short-term memory")
 
         elif args.classi_model == "cnn":
-            output(info + "Convolutional neural networks")
+            app_output.output(info + "Convolutional neural networks")
 
         else:
-            exception(f"Wrong classification model {args.classi_model}")
+            app_output.output(f"Wrong classification model {args.classi_model}")
 
 
 def compare_reviews(filename_1, filename_2, n_rows):
@@ -252,9 +233,9 @@ def compare_reviews(filename_1, filename_2, n_rows):
         except ZeroDivisionError:
             f1score = 0
 
-        print(
+        app_output.output(
             f"{category_name} category compare -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score}")
-        print(f"+ {TP + TN}, - {FP + FN}")
+        app_output.output(f"+ {TP + TN}, - {FP + FN}")
 
         TP = 0
         TN = 0
@@ -293,6 +274,6 @@ def compare_reviews(filename_1, filename_2, n_rows):
         except ZeroDivisionError:
             f1score = 0
 
-        print(
+        app_output.output(
             f"{category_name} sentiment compare -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score}")
-        print(f"+ {TP + TN}, - {FP + FN}\n")
+        app_output.output(f"+ {TP + TN}, - {FP + FN}\n")

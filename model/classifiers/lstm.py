@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 
 import constants
-from view import util
+from view import app_output
 from controller import vector_reprezentation
 
 
@@ -83,7 +83,7 @@ class LongShortTermMemory(nn.Module):
 
 def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, is_fasttext,
                   batch_size=1, model_filename_train=None, model_filename_test=None):
-    X_train = [model_methods.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in X_train]
+    X_train = [vector_reprezentation.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in X_train]
     X_train = np.array(X_train)
     Y_train = Y_train_sentiment.to_numpy()
     X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.25,
@@ -204,7 +204,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
                 bow_cnn_predictions.append(1)
             i += 1
     # compare with true labels and print result
-    util.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
+    app_output.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
 
 
 def classifie_LSTM(lstm_model, source_model, device, max_sen_len, words, is_fasttext=True):

@@ -4,7 +4,8 @@ import pickle
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import constants
-from view import util
+import util
+from view import app_output
 from model.enums.language_enum import Language
 from model.enums.sentiment_enum import Sentiment
 from model.gui_model.classifier_model import Classifier
@@ -491,7 +492,7 @@ class Ui_MainWindow(object):
         if classifier_method == "lstm":
             models_filename = f"{constants.CLASSIFIER_LSTM}{category_name}_{self.device}_{target_language}_{sent_language}.bin"
         else:
-            util.exception(f"Unknown classifier method {classifier_method}")
+            app_output.exception(f"Unknown classifier method {classifier_method}")
 
         # if exists - load
         if os.path.exists(models_filename):

@@ -1,7 +1,8 @@
 import re
 
 import constants
-from view import util
+from model.enums.language_enum import Language
+from view import app_output
 from easynmt import EasyNMT
 from langdetect import detect_langs
 from sklearn.model_selection import train_test_split
@@ -11,14 +12,14 @@ def remove_bad_words(sentences, lang):
     """
     Removing the stop words
     """
-    if lang == 'cs':
+    if lang == Language.CZECH.value:
         filename = constants.SW_FOLDER + "stop_words_czech.txt"
-    elif lang == 'en':
+    elif lang == Language.ENGLISH.value:
         filename = constants.SW_FOLDER + "stop_words_english.txt"
-    elif lang == 'de':
+    elif lang == Language.GERMAN.value:
         filename = constants.SW_FOLDER + "stop_words_german.txt"
     else:
-        util.exception("Unknown language.")
+        app_output.exception(f"Unknown language {lang}.")
 
     with open(filename, encoding='utf-8') as f:
         stop_words = [line.strip() for line in f.readlines()]
@@ -115,8 +116,8 @@ def lower_split(top_data_df, lang, check_lang=False):
             except:
                 lost += 1
 
-    util.output(f"Deleted reviews due to bad content (language, no text, ..) : {lost}")
-    util.output(f"Correct reviews : {success}")
+    app_output.output(f"Deleted reviews due to bad content (language, no text, ..) : {lost}")
+    app_output.output(f"Correct reviews : {success}")
     return result
 
 
@@ -166,4 +167,4 @@ def remove_diacritics_from_file(filename, langs):
     with open(filename, 'w', encoding="utf-8") as f:
         f.writelines(lines)
 
-    print(f"Removed diacritics from file {filename}")
+    app_output.output(f"Removed diacritics from file {filename}")

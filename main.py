@@ -1,5 +1,5 @@
 import argparse
-from view import util
+from view import app_output
 from controller import app_controller
 
 

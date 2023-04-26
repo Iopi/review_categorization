@@ -5,7 +5,8 @@ from gensim.models import KeyedVectors
 import constants
 from controller import preprocessing, transformation, vector_reprezentation
 from model.classifiers import svm, lstm, cnn, log_reg, decision_tree
-from view import util
+from view import app_output
+import util
 
 
 def classification_sentiments(data_df_ranked, categories, model_tuple, args, test_data_df=None):
@@ -28,7 +29,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
 
         start_time_class = time.time()
 
-        util.output("Classification sentiment " + category_name)
+        app_output.output("Classification sentiment " + category_name)
 
         # drop not needed rows
         df_sentiment = data_df_ranked[data_df_ranked[category_name] != 2]
@@ -72,7 +73,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
                 tfidf_model = vector_reprezentation.create_tfidf_model_file(review_dict, df_sentiment, X_train,
                                                                             filename)
             else:
-                util.exception(f"Wrong model type {args.model_type}")
+                app_output.exception(f"Wrong model type {args.model_type}")
 
             # train classificator
             # svm classificator
@@ -88,7 +89,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
                 clf = decision_tree.training_Decision_Tree(Y_train, filename)
 
             else:
-                util.exception(f"Wrong classification model {args.classi_model}")
+                app_output.exception(f"Wrong classification model {args.classi_model}")
 
             # test classificator
             if args.model_type == 'bow':
@@ -119,16 +120,16 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
                                              is_fasttext, padding=True, model_filename_test=model_filename_test)
                 cnn.testing_CNN(cnn_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext)
             else:
-                util.exception(f"Wrong classification model {args.classi_model}")
+                app_output.exception(f"Wrong classification model {args.classi_model}")
 
-        util.output("Time taken to predict " + category_name + " :" + (str(time.time() - start_time_class) + "\n"))
+        app_output.output("Time taken to predict " + category_name + " :" + (str(time.time() - start_time_class) + "\n"))
         # break
-    util.output("Time taken to predict all:" + str(time.time() - start_time))
+    app_output.output("Time taken to predict all:" + str(time.time() - start_time))
 
 
 def classification_category_existence(reviews_df, reviews_test_df, classes, model_tuple, args):
     # annotated 1, not annotated 0
-    util.output("Annotated 1, not annotated 0")
+    app_output.output("Annotated 1, not annotated 0")
     temp_data = reviews_df.copy()
     preprocessing.map_category_existence(temp_data)
     if reviews_test_df is not None:
@@ -141,7 +142,7 @@ def classification_category_existence(reviews_df, reviews_test_df, classes, mode
 
 def classification_sentiment(reviews_df, reviews_test_df, classes, model_tuple, args):
     # positive 1, negative 0
-    util.output("Positive 1, negative 0")
+    app_output.output("Positive 1, negative 0")
     temp_data = reviews_df.copy()
     preprocessing.map_sentiment(temp_data)
     if reviews_test_df is not None:
@@ -182,6 +183,7 @@ def load_models_and_trans_matrix(args, trans_method, filename):
 
 
 def run(args):
+
     reviews_test_df = None
     # only creating model
     if args.action == 'model':

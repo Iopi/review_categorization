@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from sklearn.metrics import classification_report
 from torch import optim
 
-from view import util
+from view import app_output
 from controller import vector_reprezentation
 
 EMBEDDING_SIZE = 500
@@ -117,4 +117,4 @@ def testing_CNN(cnn_model, vec_model, device, max_sen_len, X_test, Y_test_sentim
             bow_cnn_predictions.append(predicted.cpu().numpy()[0])
             original_lables_cnn_bow.append(torch.tensor([Y_test_sentiment[index]], dtype=torch.long).cpu().numpy()[0])
     # compare with true labels and print result
-    util.output(classification_report(original_lables_cnn_bow, bow_cnn_predictions))
+    app_output.output(classification_report(original_lables_cnn_bow, bow_cnn_predictions))

@@ -8,9 +8,8 @@ from gensim.models import Word2Vec
 from sklearn.metrics import classification_report
 
 import constants
-from view import util
+from view import app_output
 from controller import preprocessing
-
 
 
 def create_lower_split_model(args):
@@ -26,7 +25,7 @@ def create_lower_split_model(args):
     elif args.model_type == 'w2v':
         make_word2vec_model(result, word2vec_file=args.model_path)
     else:
-        util.exception(f"Model type {args.model_type} not found.")
+        app_output.exception(f"Model type {args.model_type} not found.")
 
 
 def make_fasttext_model(temp_df, sg=1, min_count=2, vector_size=300, workers=3, window=5, fasttext_file=None):
@@ -159,7 +158,7 @@ def testing_classificator_with_tfidf(clf_decision, tfidf_model, review_dict, X_t
         features = gensim.matutils.corpus2csc([tfidf_model[doc]], num_terms=vocab_len).toarray()[:, 0]
         test_features.append(features)
     test_predictions = clf_decision.predict(test_features)
-    util.output(classification_report(Y_test_sentiment, test_predictions))
+    app_output.output(classification_report(Y_test_sentiment, test_predictions))
 
 
 def testing_classificator_with_bow(clf_decision, review_dict, X_test, Y_test_sentiment):
@@ -171,4 +170,4 @@ def testing_classificator_with_bow(clf_decision, review_dict, X_test, Y_test_sen
                                               num_terms=vocab_len).toarray()[:, 0]
         test_features.append(features)
     test_predictions = clf_decision.predict(test_features)
-    util.output(classification_report(Y_test_sentiment, test_predictions))
+    app_output.output(classification_report(Y_test_sentiment, test_predictions))
