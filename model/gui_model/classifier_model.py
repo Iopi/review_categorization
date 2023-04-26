@@ -1,5 +1,5 @@
 from view import util
-from model.classifires import lstm
+from model.classifiers import lstm
 
 
 class Classifier:

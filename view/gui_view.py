@@ -7,8 +7,8 @@ import constants
 from view import util
 from model.enums.language_enum import Language
 from model.enums.sentiment_enum import Sentiment
-from model.classifier_model import Classifier
-from model.saved_model import SavedModels
+from model.gui_model.classifier_model import Classifier
+from model.gui_model.saved_model import SavedModels
 from controller import preprocessing
 
 
