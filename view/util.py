@@ -208,8 +208,6 @@ def print_info(args, is_fasttext):
         else:
             exception(f"Wrong classification model {args.classi_model}")
 
-    output(info)
-
 
 def compare_reviews(filename_1, filename_2, n_rows):
     reviews_1 = pd.read_excel(filename_1, sheet_name="Sheet1", nrows=n_rows)

@@ -1,6 +1,6 @@
 import argparse
 from view import util
-from controller import controller
+from controller import app_controller
 
 
 def parse_agrs():
@@ -76,7 +76,8 @@ def parse_agrs():
 def main():
     args = parse_agrs()
 
-    controller.run(args)
+    app_controller.run(args)
+
 
 if __name__ == "__main__":
     main()

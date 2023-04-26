@@ -3,9 +3,7 @@ import pandas as pd
 from gensim.models import KeyedVectors
 
 import constants
-import preprocessing
-import transformation
-import vector_reprezentation
+from controller import preprocessing, transformation, vector_reprezentation
 from model.classifiers import svm, lstm, cnn, log_reg, decision_tree
 from view import util
 
