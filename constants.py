@@ -1,7 +1,6 @@
 DATA_FOLDER = 'data/'
 SW_FOLDER = 'data/stopwords/'
 DICT_FOLDER = 'data/dictionary/'
-CREATE_MODEL = False
 MODEL_FOLDER = 'data/vec_model/'
 CLASSIFIER_FOLDER = 'data/saved_classifiers/'
 
