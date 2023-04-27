@@ -29,6 +29,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
 
         start_time_class = time.time()
 
+        app_output.output("-------------------------------------")
         app_output.output("Classification sentiment " + category_name)
 
         # drop not needed rows
@@ -37,7 +38,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
         # Plotting the sentiment distribution
         # util.plot_distribution(df_sentiment, category_name)
 
-        util.sentiment_count(df_sentiment, category_name)
+        # util.sentiment_count(df_sentiment, category_name)
 
         # Call the train_test_split
         if test_data_df is None:
@@ -46,7 +47,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
         else:
             df_test = test_data_df[test_data_df[category_name] != 2]
 
-            util.sentiment_count(df_test, category_name)
+            # util.sentiment_count(df_test, category_name)
 
             X_train = df_sentiment['tokens']
             Y_train = df_sentiment[category_name]
@@ -54,6 +55,8 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
             Y_test = df_test[category_name]
 
         util.compute_majority_class(Y_test)
+        app_output.output("-------------------------------------")
+
         # if simple classifier
         if vec_model_train is None:
             clf = None
@@ -75,23 +78,23 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
             else:
                 app_output.exception(f"Wrong model type {args.model_type}")
 
-            # train classificator
-            # svm classificator
+            # train classifier
+            # svm classifier
             if args.classi_model == "svm":
                 clf = svm.training_Linear_SVM(Y_train, filename)
 
-            # logistic regression classificator
+            # logistic regression classifier
             elif args.classi_model == "logreg":
                 clf = log_reg.training_Logistic_Regression(Y_train, filename)
 
-            # decision tree classificator
+            # decision tree classifier
             elif args.classi_model == "dectree":
                 clf = decision_tree.training_Decision_Tree(Y_train, filename)
 
             else:
                 app_output.exception(f"Wrong classification model {args.classi_model}")
 
-            # test classificator
+            # test classifier
             if args.model_type == 'bow':
                 vector_reprezentation.testing_classificator_with_bow(clf, review_dict, X_test, Y_test)
 
@@ -105,7 +108,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
                 max_sen_len_test = df_test.tokens.map(len).max()
                 max_sen_len = max(max_sen_len, max_sen_len_test)
 
-            # lstm classificator
+            # lstm classifier
             if args.classi_model == "lstm":
                 lstm_model = lstm.training_LSTM(vec_model_train, trans_matrix, device, max_sen_len, X_train, Y_train,
                                                 is_fasttext,
@@ -113,7 +116,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
                                                 model_filename_test=model_filename_test)
                 lstm.testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test, is_fasttext)
 
-            # cnn classificator
+            # cnn classifier
             elif args.classi_model == "cnn":
                 cnn_model = cnn.training_CNN(vec_model_train, model_filename_train, trans_matrix, device, max_sen_len,
                                              X_train, Y_train,
@@ -128,7 +131,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
 
 def classification_category_existence(reviews_df, reviews_test_df, classes, model_tuple, args):
     # annotated 1, not annotated 0
-    app_output.output("Annotated 1, not annotated 0")
+    app_output.output("-----------------------------\nAnnotated 1, not annotated 0\n-----------------------------")
     temp_data = reviews_df.copy()
     preprocessing.map_category_existence(temp_data)
     if reviews_test_df is not None:
@@ -141,7 +144,8 @@ def classification_category_existence(reviews_df, reviews_test_df, classes, mode
 
 def classification_sentiment(reviews_df, reviews_test_df, classes, model_tuple, args):
     # positive 1, negative 0
-    app_output.output("Positive 1, negative 0")
+    app_output.output("Annotated 1, not annotated 0")
+    app_output.output("-----------------------\nPositive 1, negative 0\n-----------------------")
     temp_data = reviews_df.copy()
     preprocessing.map_sentiment(temp_data)
     if reviews_test_df is not None:
@@ -182,7 +186,6 @@ def load_models_and_trans_matrix(args, trans_method, filename):
 
 
 def run(args):
-
     reviews_test_df = None
     # only creating model
     if args.action == 'model':

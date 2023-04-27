@@ -1,7 +1,7 @@
 import logging
 
 # logger creating
-logging.basicConfig(filename="../log.txt",
+logging.basicConfig(filename="log.txt",
                     format='%(message)s',
                     filemode='w')
 logging.getLogger('matplotlib.font_manager').disabled = True

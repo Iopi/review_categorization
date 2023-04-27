@@ -87,7 +87,7 @@ def plot_top_similar(query_word, model, limit=10, color=['maroon', 'blue']):
 def compute_majority_class(Y_train):
     sentiment_values = pd.Series(Y_train).value_counts().sort_values(ascending=False)
     acc = sentiment_values.values[0] / sum(sentiment_values.values)
-    app_output.output(f"MC -> accuracy: {acc}")
+    app_output.output(f"Majority class: {acc}")
 
 
 def print_metrics(true_labels, classified_labels, category_name):

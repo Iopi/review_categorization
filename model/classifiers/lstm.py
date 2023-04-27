@@ -135,7 +135,7 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
             # calculate accuracy
             accuracy = acc(output, labels)
             train_acc += accuracy
-            # prevent the exploding gradient problem in LSTM.
+            # prevent the exploding gradient problem in LSTM
             nn.utils.clip_grad_norm_(lstm_model.parameters(), clip)
             optimizer.step()
 
@@ -188,8 +188,7 @@ def training_LSTM_validation(vec_model, trans_matrix, device, max_sen_len, X_tra
         h = lstm_model.init_hidden(batch_size, device)
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
-            # Creating new variables for the hidden state, otherwise
-            # we'd backprop through the entire training history
+            # Creating new variables for the hidden state
             h = tuple([each.data for each in h])
 
             lstm_model.zero_grad()
@@ -203,7 +202,7 @@ def training_LSTM_validation(vec_model, trans_matrix, device, max_sen_len, X_tra
             # calculating accuracy
             accuracy = acc(output, labels)
             train_acc += accuracy
-            # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
+            # prevent the exploding gradient problem in RNNs / LSTMs.
             nn.utils.clip_grad_norm_(lstm_model.parameters(), clip)
             optimizer.step()
 
@@ -234,10 +233,10 @@ def training_LSTM_validation(vec_model, trans_matrix, device, max_sen_len, X_tra
         app_output.output(f'train_accuracy : {epoch_train_acc * 100} val_accuracy : {epoch_val_acc * 100}')
         if epoch_val_loss <= valid_loss_min:
             torch.save(lstm_model.state_dict(), '../working/state_dict.pt')
-            print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min,
+            app_output.output('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min,
                                                                                             epoch_val_loss))
             valid_loss_min = epoch_val_loss
-        print(25 * '==')
+        app_output.output(25 * '==')
 
     return lstm_model
 

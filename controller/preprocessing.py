@@ -116,8 +116,8 @@ def lower_split(top_data_df, lang, check_lang=False):
             except:
                 lost += 1
 
-    app_output.output(f"Deleted reviews due to bad content (language, no text, ..) : {lost}")
-    app_output.output(f"Correct reviews : {success}")
+    # app_output.output(f"Deleted reviews due to bad content (language, no text, ..) : {lost}")
+    app_output.output(f"Correct reviews for language {lang} : {success}")
     return result
 
 
