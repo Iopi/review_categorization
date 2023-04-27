@@ -123,7 +123,6 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
                 app_output.exception(f"Wrong classification model {args.classi_model}")
 
         app_output.output("Time taken to predict " + category_name + " :" + (str(time.time() - start_time_class) + "\n"))
-        # break
     app_output.output("Time taken to predict all:" + str(time.time() - start_time))
 
 
@@ -189,6 +188,7 @@ def run(args):
     if args.action == 'model':
         vector_reprezentation.create_lower_split_model(args)
         exit(0)
+    # classification
     elif args.action == 'cross' or args.action == 'translate' or args.action == 'monotest':
         reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1")
         reviews_test_df = reviews_test_df.dropna(thresh=4)

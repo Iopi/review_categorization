@@ -122,14 +122,15 @@ def lower_split(top_data_df, lang, check_lang=False):
 
 
 def split_line(line, lang):
-    if lang == 'cs':
+    # remove diacritics
+    if lang == Language.CZECH.value:
         line = remove_diacritics_cs(line)
-    elif lang == 'de':
+    elif lang == Language.GERMAN.value:
         line = remove_diacritics_de(line)
-    line = re.sub('([.,!?()])', r' \1 ', line)  # odsazeni punktace
-    line = re.sub(r'[’\'\-]', '', line)  # smazani punktace a nechtenych symbolu
-    line = re.sub(r'[":;]', ' ', line)  # smazani punktace a nechtenych symbolu
-    line = re.sub('\s{2,}', ' ', line)  # sjednoceni mezer
+    line = re.sub('([.,!?()])', r' \1 ', line)  # punctuation offset
+    line = re.sub(r'[’\'\-]', '', line)  # remove unwanted symbols ', -
+    line = re.sub(r'[":;]', ' ', line)  # replace some unwanted symbols with space
+    line = re.sub('\s{2,}', ' ', line)  # united spaces
 
     return line.lstrip().rstrip()
 
@@ -159,9 +160,9 @@ def remove_diacritics_cs(sentence):
 def remove_diacritics_from_file(filename, langs):
     with open(filename, 'r', encoding="utf-8") as f:
         for lang in langs:
-            if lang == 'cs':
+            if lang == Language.CZECH.value:
                 lines = [remove_diacritics_cs(line) for line in f]
-            elif lang == 'de':
+            elif lang == Language.GERMAN.value:
                 lines = [remove_diacritics_de(line) for line in f]
 
     with open(filename, 'w', encoding="utf-8") as f:

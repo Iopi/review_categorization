@@ -13,19 +13,24 @@ from controller import preprocessing
 
 
 def create_lower_split_model(args):
+    # load feed
     top_data_df = pd.read_excel(args.feed_path, sheet_name="Sheet1")
+    # preprocessing
     result = preprocessing.lower_split(top_data_df, args.lang, check_lang=False)
+    # remove stop words
     preprocessing.remove_bad_words(result, args.lang)
-    len_before = len(result)
+    # remove empty tokens
     result = [x for x in result if x != ['']]
-    len_after = len(result)
-    print(f"Before {len_before} and after {len_after}, diff -> {len_before - len_after}")
+    # save vector model
     if args.model_type == 'ft':
         make_fasttext_model(result, fasttext_file=args.model_path)
     elif args.model_type == 'w2v':
         make_word2vec_model(result, word2vec_file=args.model_path)
     else:
         app_output.exception(f"Model type {args.model_type} not found.")
+
+    app_output.output(f"Model created in path {args.model_path}")
+
 
 
 def make_fasttext_model(temp_df, sg=1, min_count=2, vector_size=300, workers=3, window=5, fasttext_file=None):
