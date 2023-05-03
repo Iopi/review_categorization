@@ -10,6 +10,15 @@ import util
 
 
 def classification_sentiments(data_df_ranked, categories, model_tuple, args, test_data_df=None):
+    '''
+    Detection of sentiment for all categories
+    :param data_df_ranked: Main window of ui
+    :param categories: Main window of ui
+    :param model_tuple: Main window of ui
+    :param args: Main window of ui
+    :param test_data_df: Main window of ui
+    '''
+
     start_time = time.time()
 
     model_filename_train = model_tuple[0]
@@ -130,6 +139,7 @@ def classification_sentiments(data_df_ranked, categories, model_tuple, args, tes
 
 
 def classification_category_existence(reviews_df, reviews_test_df, classes, model_tuple, args):
+
     # annotated 1, not annotated 0
     app_output.output("-----------------------------\nAnnotated 1, not annotated 0\n-----------------------------")
     temp_data = reviews_df.copy()
