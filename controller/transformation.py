@@ -6,11 +6,17 @@ from view import app_output
 
 
 def cosine_similarity(vec_a, vec_b):
+    """
+    Calculates cosine similarity
+    :param vec_a: first vector
+    :param vec_b: second vector
+    :return:  calculated cosine similarity
+    """
     return np.dot(vec_a, vec_b) / (np.linalg.norm(vec_a) * np.linalg.norm(vec_b))
 
 
 def eval_similarity(target_model, source_model, target_lang, source_lang, trans_matrix):
-    filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}_muj.txt"
+    filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}.txt"
     if not os.path.exists(filename):
         app_output.exception(f"Dictionary {filename} not found.")
 

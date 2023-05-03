@@ -4,9 +4,10 @@ from controller import app_controller
 
 
 def parse_agrs():
-    '''
+    """
     Arguments parser
-    '''
+    :return: user arguments
+    """
     parser = argparse.ArgumentParser(description='Reviews classification.')
     parser.add_argument('-mp', dest='model_path', type=str, help='Destination of vector model for classification for '
                                                                  'train (and test for mono-lingual classification).')
@@ -77,9 +78,10 @@ def parse_agrs():
 
 
 def main():
-    '''
+    """
     Main runs control af arguments and app controller
-    '''
+    :return:
+    """
     args = parse_agrs()
 
     app_controller.run(args)

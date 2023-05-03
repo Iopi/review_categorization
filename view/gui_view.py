@@ -311,8 +311,16 @@ class Ui_MainWindow(object):
         self.label_3.setText("Loading vector models...")
         self.label_3.repaint()
         target_model = self.models.prepare_vec_model(Language[target_language].value)
+        if target_model is None:
+            self.label_3.setText(f"Vector model is missing!")
+            self.label_3.repaint()
+            return
         if Language[sent_language].value != Language[target_language].value:
             source_model = self.models.prepare_vec_model(Language[sent_language].value)
+            if source_model is None:
+                self.label_3.setText(f"Vector model is missing!")
+                self.label_3.repaint()
+                return
         else:
             source_model = target_model
 

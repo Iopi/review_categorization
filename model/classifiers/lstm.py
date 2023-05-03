@@ -232,7 +232,7 @@ def training_LSTM_validation(vec_model, trans_matrix, device, max_sen_len, X_tra
         app_output.output(f'train_loss : {epoch_train_loss} val_loss : {epoch_val_loss}')
         app_output.output(f'train_accuracy : {epoch_train_acc * 100} val_accuracy : {epoch_val_acc * 100}')
         if epoch_val_loss <= valid_loss_min:
-            torch.save(lstm_model.state_dict(), '../working/state_dict.pt')
+            torch.save(lstm_model.state_dict(), constants.DATA_FOLDER + 'state_dict.pt')
             app_output.output('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min,
                                                                                             epoch_val_loss))
             valid_loss_min = epoch_val_loss
