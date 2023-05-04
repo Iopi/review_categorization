@@ -234,7 +234,7 @@ def run(args):
     # classification process
     elif args.action == 'cross' or args.action == 'translate' or args.action == 'monotest':
         # load test reviews
-        reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1", nrows=150)
+        reviews_test_df = pd.read_excel(args.reviews_path_test, sheet_name="Sheet1")
         reviews_test_df = reviews_test_df.dropna(thresh=4)
 
         # test reviews preprocessing
@@ -250,7 +250,7 @@ def run(args):
         reviews_test_df = reviews_test_df[reviews_test_df['tokens'].apply(lambda x: x != [''])]
 
     # load train reviews
-    reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1", nrows=500)
+    reviews_df = pd.read_excel(args.reviews_path, sheet_name="Sheet1")
     reviews_df = reviews_df.dropna(thresh=4)
 
     # train reviews preprocessing
