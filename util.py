@@ -13,7 +13,8 @@ def plot_distribution(data_df, category_name):
     """
     Plotting the distribution of category
     :param data_df: dataframe
-    :category_name: category name
+    :param category_name: category name
+    :return:
     """
     plt.figure()
     pd.value_counts(data_df[category_name]).plot.bar(title=f"{category_name} distribution in data")
@@ -22,8 +23,14 @@ def plot_distribution(data_df, category_name):
     plt.show()
 
 
-def sentiment_count(top_data_df, category_name):
-    category_data = top_data_df[category_name]
+def sentiment_count(data_df, category_name):
+    """
+    Count positive and negative sentiment in data for category
+    :param data_df: data dataframe
+    :param category_name: category name
+    :return:
+    """
+    category_data = data_df[category_name]
     values = category_data.values
     positive_count = np.count_nonzero(values == 1)
     negative_count = np.count_nonzero(values == 0)
@@ -33,6 +40,12 @@ def sentiment_count(top_data_df, category_name):
 
 
 def plot_category_distribution(Y_train, category_name):
+    """
+    Plot category distribution
+    :param Y_train: train labels
+    :param category_name: category name
+    :return:
+    """
     sentiment_values = pd.Series(Y_train).value_counts().sort_index()
     if len(sentiment_values) == 3:
         sns.barplot(x=np.array(['Neutral', 'Positive', 'Negative']), y=sentiment_values.values).set(title=category_name)
@@ -43,14 +56,22 @@ def plot_category_distribution(Y_train, category_name):
 
 def device_recognition():
     """
-    Use cuda if present
-    :return:
+    Detect cuda or cpu device
+    :return: device (cpu/gpu)
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     return device
 
 
 def plot_top_similar(query_word, model, limit=10, color=['maroon', 'blue']):
+    """
+    Plot some most similar words to query word in vector model
+    :param query_word: query word
+    :param model: vector model
+    :param limit: number of words
+    :param color: colors of plot
+    :return: figure
+    """
     embed_dim = model.wv.vectors.shape[1]
     vectors = np.empty((0, embed_dim), dtype='f')
     labels = [query_word]
@@ -85,12 +106,24 @@ def plot_top_similar(query_word, model, limit=10, color=['maroon', 'blue']):
 
 
 def compute_majority_class(Y_train):
+    """
+    Compute of majority class
+    :param Y_train: train labels
+    :return:
+    """
     sentiment_values = pd.Series(Y_train).value_counts().sort_values(ascending=False)
     acc = sentiment_values.values[0] / sum(sentiment_values.values)
     app_output.output(f"Majority class: {acc}")
 
 
 def print_metrics(true_labels, classified_labels, category_name):
+    """
+    Print metrics
+    :param true_labels: true labels
+    :param classified_labels: classified labels
+    :param category_name: category name
+    :return:
+    """
     if len(true_labels) != len(classified_labels):
         app_output.exception("Count of true labels must be same as classified labels.")
 
@@ -134,13 +167,24 @@ def print_metrics(true_labels, classified_labels, category_name):
         f"{category_name} -> recall: {recall}, precision: {precision}, accuracy: {accuracy}, f1-score {f1score} / {f1score2}")
 
 
-def print_similarity(vec_model_train, param):
+def print_similarity(vec_model, param):
+    """
+    Print similarity of word in model
+    :param vec_model: vector model
+    :param param: word
+    :return:
+    """
     app_output.output(param)
-    ms = vec_model_train.most_similar(param)
+    ms = vec_model.most_similar(param)
     app_output.output(ms)
 
 
 def remove_duplicates(filename):
+    """
+    Remove duplicate words in file
+    :param filename: filename
+    :return:
+    """
     with open(filename, 'r', encoding="utf-8") as f:
         words = f.readlines()
         len_before = len(words)
@@ -153,6 +197,12 @@ def remove_duplicates(filename):
 
 
 def print_info(args, is_fasttext):
+    """
+    Print info about classification - vector model and classification model
+    :param args: user arguments
+    :param is_fasttext: if vector model is fasttext
+    :return:
+    """
     info = ""
     if is_fasttext is None:
         if args.model_type == 'bow':
@@ -191,6 +241,13 @@ def print_info(args, is_fasttext):
 
 
 def compare_reviews(filename_1, filename_2, n_rows):
+    """
+    Compare two files of reciews and compute metrics
+    :param filename_1: filename 1
+    :param filename_2: filename 2
+    :param n_rows: Compare top n rows
+    :return:
+    """
     reviews_1 = pd.read_excel(filename_1, sheet_name="Sheet1", nrows=n_rows)
     reviews_2 = pd.read_excel(filename_2, sheet_name="Sheet1", nrows=n_rows)
     categories = reviews_1.columns[1:10]

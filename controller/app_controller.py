@@ -106,10 +106,10 @@ def classification(df_train, categories, model_tuple, args, df_test=None):
 
             # test classifier
             if args.model_type == 'bow':
-                vector_reprezentation.testing_classificator_with_bow(clf, review_dict, X_test, Y_test)
+                vector_reprezentation.testing_classifier_with_bow(clf, review_dict, X_test, Y_test)
 
             elif args.model_type == 'tfidf':
-                vector_reprezentation.testing_classificator_with_tfidf(clf, tfidf_model, review_dict, X_test, Y_test)
+                vector_reprezentation.testing_classifier_with_tfidf(clf, tfidf_model, review_dict, X_test, Y_test)
 
         # if neural network
         else:
@@ -229,7 +229,7 @@ def run(args):
     reviews_test_df = None
     # only creating model
     if args.action == 'model':
-        vector_reprezentation.create_lower_split_model(args)
+        vector_reprezentation.create_vector_model(args)
         exit(0)
     # classification process
     elif args.action == 'cross' or args.action == 'translate' or args.action == 'monotest':

@@ -9,7 +9,13 @@ from controller import preprocessing, transformation
 
 
 class SavedModels:
+    """
+    Models in use
+    """
     def __init__(self):
+        """
+        Object initialisation
+        """
         self.czech_model = None
         self.english_model = None
         self.german_model = None
@@ -23,6 +29,11 @@ class SavedModels:
         self.reviews_de = None
 
     def prepare_vec_model(self, lang):
+        """
+        Load vector model
+        :param lang: language of vector model
+        :return: vector model
+        """
         if lang == Language.CZECH.value:
             if self.czech_model is None:
                 if not os.path.exists(constants.DEFAULT_VEC_MODEL_CS):
@@ -54,6 +65,13 @@ class SavedModels:
             app_output.exception(f"Unknown language {lang}")
 
     def compute_transform_matrix(self, trans_method, target_lang, source_lang):
+        """
+        Compute transformation matrix
+        :param trans_method: transformation method
+        :param target_lang: target language
+        :param source_lang: source language
+        :return: transformation matrix
+        """
         dict_filename = constants.DICT_FOLDER + f"{target_lang}-{source_lang}.txt"
 
         if Language.CZECH.value == target_lang:
@@ -80,6 +98,11 @@ class SavedModels:
             f"Not found transformation method for target language {target_lang} and source language {source_lang}.")
 
     def load_reviews(self, lang):
+        """
+        Load reviews
+        :param lang: language of reviews
+        :return: reviews
+        """
         if lang == Language.CZECH.value:
             if self.reviews_cs is None:
                 self.reviews_cs = pd.read_excel(constants.DEFAULT_REVIEWS_CS, sheet_name="Sheet1")
@@ -108,6 +131,11 @@ class SavedModels:
             return self.reviews_de
 
     def get_model_filename(self, lang):
+        """
+        Get filename of vector model
+        :param lang: language of vector model
+        :return: filename of vector model
+        """
         if lang == Language.CZECH.value:
             if self.czech_model_filename is not None:
                 return self.czech_model_filename

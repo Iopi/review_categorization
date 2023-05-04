@@ -13,6 +13,17 @@ from model.gui_model.saved_model import SavedModels
 from controller import preprocessing
 
 
+def load_classifier(filename):
+    """
+    Load classifier object from file
+    :param filename: filename of loading file
+    :return:
+    """
+    with open(filename, 'rb') as f:
+        classifier = pickle.load(f)
+    return classifier
+
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         '''
@@ -284,11 +295,11 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def run_classification(self):
-        '''
+        """
         Action after trigger run button.
         Runs the classification.
         :return:
-        '''
+        """
         self.clean_table()
         # sentence preprocessing
         sentence = self.sentence_text_edit.toPlainText()
@@ -340,31 +351,21 @@ class Ui_MainWindow(object):
         self.label_3.repaint()
 
     def save_classifier(self, filename, classifier):
-        '''
+        """
         Save classifier object to file
         :param filename: filename of saving file
         :param classifier: classifier object to be saved
         :return:
-        '''
+        """
         with open(filename, 'wb') as f:
             pickle.dump(classifier, f)
 
-    def load_classifier(self, filename):
-        '''
-        Load classifier object from file
-        :param filename: filename of loading file
-        :return:
-        '''
-        with open(filename, 'rb') as f:
-            classifier = pickle.load(f)
-        return classifier
-
     def retranslateUi(self, MainWindow):
-        '''
+        """
         Specifies component names
         :param MainWindow: Main window of ui
         :return:
-        '''
+        """
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Customer feedback categorization demonstrator"))
         self.label.setText(_translate("MainWindow", "Text:"))
@@ -437,18 +438,18 @@ class Ui_MainWindow(object):
 
     def classification_process(self, classifier_method, train_reviews, trans_matrix, target_model, source_model,
                                sent_language, target_language, words):
-        '''
-
-        :param classifier_method:
-        :param train_reviews:
-        :param trans_matrix:
-        :param target_model:
-        :param source_model:
-        :param sent_language:
-        :param target_language:
-        :param words:
+        """
+        Classification of text from user
+        :param classifier_method: classifier method
+        :param train_reviews: train reviews
+        :param trans_matrix: transformation matrix
+        :param target_model: target vector model
+        :param source_model: source vector model
+        :param sent_language: text language
+        :param target_language: train data language
+        :param words: preprocessed text from user
         :return:
-        '''
+        """
         index = 0
         max_sen_len = train_reviews.tokens.map(len).max()
         if len(words) > max_sen_len:
@@ -489,6 +490,10 @@ class Ui_MainWindow(object):
             index += 1
 
     def clean_table(self):
+        """
+        Cleans table of results
+        :return:
+        """
         for row in range(self.result_table.rowCount()):
             for col in range(self.result_table.columnCount()):
                 item = self.result_table.item(row, col)
@@ -497,6 +502,18 @@ class Ui_MainWindow(object):
 
     def load_models(self, classifier_method, category_name, train_reviews, trans_matrix, target_model,
                     sent_language, target_language, max_sen_len):
+        """
+        Loads classifier model or train classifier and saves it to file
+        :param classifier_method: classifier method
+        :param category_name: category name
+        :param train_reviews: train reviews
+        :param trans_matrix: transformation matrix
+        :param target_model: target model
+        :param sent_language: text language
+        :param target_language: train data language
+        :param max_sen_len: maximal length of reviews
+        :return: object of trained classifier
+        """
         if classifier_method == "lstm":
             models_filename = f"{constants.CLASSIFIER_LSTM}{category_name}_{self.device}_{target_language}_{sent_language}.bin"
         else:
@@ -504,7 +521,7 @@ class Ui_MainWindow(object):
 
         # if exists - load
         if os.path.exists(models_filename):
-            classifier = self.load_classifier(models_filename)
+            classifier = load_classifier(models_filename)
 
         # if not - create and save
         else:
@@ -543,6 +560,10 @@ class Ui_MainWindow(object):
 
 
 def run_gui():
+    """
+    Runs app
+    :return:
+    """
     import sys
 
     app = QtWidgets.QApplication(sys.argv)

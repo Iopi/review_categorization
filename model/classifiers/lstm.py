@@ -12,10 +12,23 @@ from view import app_output
 from controller import vector_reprezentation
 
 
-
 class LongShortTermMemory(nn.Module):
+    """
+    Long-Short Term Memory RNN
+    """
     def __init__(self, device, no_layers, hidden_dim, output_dim, drop_prob=0.5,
                  model_filename_train=None, model_filename_test=None, trans_matrix=None):
+        """
+        Initialization of LSTM
+        :param device:
+        :param no_layers: number of layers
+        :param hidden_dim: hidden dimension - number of neurons in hidden layer
+        :param output_dim: output dimension - number of neurons in linear layer
+        :param drop_prob: drop probability - regulation of training
+        :param model_filename_train: vector model filename for train
+        :param model_filename_test: vector model filename for test if exists
+        :param trans_matrix: transformation matrix
+        """
         super(LongShortTermMemory, self).__init__()
 
         self.hidden_dim = hidden_dim
@@ -46,6 +59,13 @@ class LongShortTermMemory(nn.Module):
         self.trans_matrix = None if trans_matrix is None else torch.from_numpy(trans_matrix).float().to(device)
 
     def forward(self, x, hidden, train_input):
+        """
+        Passing input data to LSTM
+        :param x: input data
+        :param hidden: hidden state from previous step
+        :param train_input: true if training, False if testing
+        :return: probability of positive sentiment
+        """
         batch_size = x.size(0)
         # target embeddings
         if train_input:
@@ -73,6 +93,12 @@ class LongShortTermMemory(nn.Module):
         return sig_out, hidden
 
     def init_hidden(self, batch_size, device):
+        """
+        Initialization of hidden state
+        :param batch_size: number of sequences processed in one step
+        :param device: device (cpu/gpu)
+        :return: hidden state
+        """
         # Create two new tensors with sizes no_layers x batch_size x hidden_dim,
         # initialized to zero, for hidden state and cell state of LSTM
         h0 = torch.zeros((self.no_layers, batch_size, self.hidden_dim)).to(device)
@@ -81,12 +107,27 @@ class LongShortTermMemory(nn.Module):
         return hidden
 
 
-def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, is_fasttext,
+def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train, is_fasttext,
                   batch_size=1, model_filename_train=None, model_filename_test=None):
+    """
+    Training of LSTM model
+    :param vec_model: vector model
+    :param trans_matrix: transformation matrix
+    :param device: device (cpu/gpu)
+    :param max_sen_len: maximal text length in data
+    :param X_train: train tokens
+    :param Y_train: train labels
+    :param is_fasttext: if vector model is fasttext
+    :param batch_size: number of sequences processed in one step
+    :param model_filename_train: vector model filename
+    :param model_filename_test: vector model filename for test
+    :return: trained LSTM model
+    """
     # make vector index map
-    X_train = [vector_reprezentation.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in X_train]
+    X_train = [vector_reprezentation.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in
+               X_train]
     X_train = np.array(X_train)
-    Y_train = Y_train_sentiment.to_numpy()
+    Y_train = Y_train.to_numpy()
     # create dataloader
     train_data = TensorDataset(torch.from_numpy(X_train), torch.from_numpy(Y_train))
     train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
@@ -141,11 +182,27 @@ def training_LSTM(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train
 
     return lstm_model
 
-def training_LSTM_validation(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, is_fasttext,
-                  batch_size=1, model_filename_train=None, model_filename_test=None):
-    X_train = [vector_reprezentation.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in X_train]
+
+def training_LSTM_validation(vec_model, trans_matrix, device, max_sen_len, X_train, Y_train, is_fasttext,
+                             batch_size=1, model_filename_train=None, model_filename_test=None):
+    """
+    Validation training of LSTM model
+    :param vec_model: vector model
+    :param trans_matrix: transformation matrix
+    :param device: device (cpu/gpu)
+    :param max_sen_len: maximal text length in data
+    :param X_train: train tokens
+    :param Y_train: train labels
+    :param is_fasttext: if vector model is fasttext
+    :param batch_size: number of sequences processed in one step
+    :param model_filename_train: vector model filename
+    :param model_filename_test: vector model filename for test
+    :return: trained LSTM model
+    """
+    X_train = [vector_reprezentation.make_vector_index_map(vec_model, line, max_sen_len, is_fasttext) for line in
+               X_train]
     X_train = np.array(X_train)
-    Y_train = Y_train_sentiment.to_numpy()
+    Y_train = Y_train.to_numpy()
     X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.25,
                                                           random_state=15)
     train_data = TensorDataset(torch.from_numpy(X_train), torch.from_numpy(Y_train))
@@ -234,14 +291,25 @@ def training_LSTM_validation(vec_model, trans_matrix, device, max_sen_len, X_tra
         if epoch_val_loss <= valid_loss_min:
             torch.save(lstm_model.state_dict(), constants.DATA_FOLDER + 'state_dict.pt')
             app_output.output('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min,
-                                                                                            epoch_val_loss))
+                                                                                                        epoch_val_loss))
             valid_loss_min = epoch_val_loss
         app_output.output(25 * '==')
 
     return lstm_model
 
 
-def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext):
+def testing_LSTM(lstm_model, vec_model, device, max_sen_len, X_test, Y_test, is_fasttext):
+    """
+    Testing of LSTM model
+    :param lstm_model: cnn model
+    :param vec_model: vector model
+    :param device: device (cpu/gpu)
+    :param max_sen_len: maximal text length in data
+    :param X_test: test tokens
+    :param Y_test: test labels
+    :param is_fasttext: if vector model is fasttext
+    :return:
+    """
     bow_cnn_predictions = []
     # lstm evaluation
     lstm_model.eval()
@@ -249,7 +317,7 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
         i = 0
         for tags in X_test:
             # make vector index map
-            vec = vector_reprezentation.make_vector_index_map(vec_model_test, tags, max_sen_len, is_fasttext)
+            vec = vector_reprezentation.make_vector_index_map(vec_model, tags, max_sen_len, is_fasttext)
             inputs = np.expand_dims(vec, axis=0)
             torch.from_numpy(inputs).float().to(device)
             inputs = torch.from_numpy(inputs).to(device)
@@ -265,10 +333,20 @@ def testing_LSTM(lstm_model, vec_model_test, device, max_sen_len, X_test, Y_test
                 bow_cnn_predictions.append(1)
             i += 1
     # compare with true labels and print result
-    app_output.output(classification_report(Y_test_sentiment, bow_cnn_predictions))
+    app_output.output(classification_report(Y_test, bow_cnn_predictions))
 
 
 def classifie_LSTM(lstm_model, source_model, device, max_sen_len, words, is_fasttext=True):
+    """
+    Classifies of LSTM model in gui
+    :param lstm_model: lstm model
+    :param source_model: source vector model
+    :param device: device (cpu/gpu)
+    :param max_sen_len: maximal text length in data
+    :param words: tokens to be classified
+    :param is_fasttext: if vector model is fasttext
+    :return: probability of positive sentiment
+    """
     lstm_model.eval()
     with torch.no_grad():
         vec = vector_reprezentation.make_vector_index_map(source_model, words, max_sen_len, is_fasttext)

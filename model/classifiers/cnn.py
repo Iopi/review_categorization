@@ -8,15 +8,26 @@ from torch import optim
 from view import app_output
 from controller import vector_reprezentation
 
-EMBEDDING_SIZE = 500
-NUM_FILTERS = 10
-
 
 class ConvolutionalNeuralNetworkClassifier(nn.Module):
-    def __init__(self, vocab_size, num_classes, model_filename, device, window_sizes=(1, 2, 3, 5), padding=False,
+    """
+    Convolutional Neural Network Classifier
+    """
+    def __init__(self, num_classes, model_filename, device, window_sizes=(1, 2, 3, 5), padding=False,
                  trans_matrix=None, model_filename_test=None):
+        """
+        Initialization of CNN
+        :param num_classes: number of classes
+        :param model_filename: vector model filename
+        :param device: device (cpu/gpu)
+        :param window_sizes: window sizes for filter application
+        :param padding:if padding is used
+        :param trans_matrix: transformation matrix if exists
+        :param model_filename_test: vector model filename for test if exists
+        """
         super(ConvolutionalNeuralNetworkClassifier, self).__init__()
 
+        num_filters = 10
         vec_model = gensim.models.KeyedVectors.load(model_filename)
         weights = vec_model.wv
 
@@ -35,15 +46,21 @@ class ConvolutionalNeuralNetworkClassifier(nn.Module):
             self.embedding_test = self.embedding_train
 
         self.convs = nn.ModuleList([
-            nn.Conv2d(1, NUM_FILTERS, [window_size, vec_model.vector_size], padding=(window_size - 1, 0))
+            nn.Conv2d(1, num_filters, [window_size, vec_model.vector_size], padding=(window_size - 1, 0))
             for window_size in window_sizes
         ])
         self.dropout = nn.Dropout(0.5)
-        self.fc = nn.Linear(NUM_FILTERS * len(window_sizes), num_classes)
+        self.fc = nn.Linear(num_filters * len(window_sizes), num_classes)
 
         self.trans_matrix = None if trans_matrix is None else torch.from_numpy(trans_matrix).float().to(device)
 
     def forward(self, x, train_input):
+        """
+        Passing input data to CNN
+        :param x: input data
+        :param train_input: true if training, False if testing
+        :return: probability of positive sentiment
+        """
         if train_input:
             x = self.embedding_train(x)
         else:
@@ -70,14 +87,27 @@ class ConvolutionalNeuralNetworkClassifier(nn.Module):
         return probs
 
 
-def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_train, Y_train_sentiment, is_fasttext,
+def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_train, Y_train, is_fasttext,
                  padding=False, model_filename_test=None):
-    NUM_CLASSES = 2
-    VOCAB_SIZE = len(model)
+    """
+    Training of CNN model
+    :param model: vector model
+    :param model_filename: vector model filename
+    :param trans_matrix: transformation matrix
+    :param device: device (cpu/gpu)
+    :param max_sen_len: maximal text length in data
+    :param X_train: train tokens
+    :param Y_train: train labels
+    :param is_fasttext: if vector model is fasttext
+    :param padding: if padding is used
+    :param model_filename_test: vector model filename for test
+    :return: trained CNN model
+    """
+    num_classes = 2
 
-    cnn_model = ConvolutionalNeuralNetworkClassifier(vocab_size=VOCAB_SIZE, num_classes=NUM_CLASSES,
-                                                     model_filename=model_filename, device=device, padding=padding,
-                                                     trans_matrix=trans_matrix, model_filename_test=model_filename_test)
+    cnn_model = ConvolutionalNeuralNetworkClassifier(num_classes=num_classes, model_filename=model_filename,
+                                                     device=device, padding=padding, trans_matrix=trans_matrix,
+                                                     model_filename_test=model_filename_test)
     cnn_model.to(device)
     loss_function = nn.CrossEntropyLoss()
     optimizer = optim.Adam(cnn_model.parameters(), lr=0.001)
@@ -92,7 +122,7 @@ def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_tra
             # Forward pass to get probability of positive sentiment
             probs = cnn_model(bow_vec, True)
             # get label
-            target = torch.tensor([Y_train_sentiment[index]], dtype=torch.long, device=device)
+            target = torch.tensor([Y_train[index]], dtype=torch.long, device=device)
             # Calculate Loss: softmax --> cross entropy loss
             loss = loss_function(probs, target)
             train_loss += loss.item()
@@ -104,7 +134,18 @@ def training_CNN(model, model_filename, trans_matrix, device, max_sen_len, X_tra
     return cnn_model
 
 
-def testing_CNN(cnn_model, vec_model, device, max_sen_len, X_test, Y_test_sentiment, is_fasttext):
+def testing_CNN(cnn_model, vec_model, device, max_sen_len, X_test, Y_test, is_fasttext):
+    """
+    Testing of CNN model
+    :param cnn_model: cnn model
+    :param vec_model: vector model
+    :param device: device (cpu/gpu)
+    :param max_sen_len: maximal text length in data
+    :param X_test: test tokens
+    :param Y_test: test labels
+    :param is_fasttext: if vector model is fasttext
+    :return:
+    """
     bow_cnn_predictions = []
     original_lables_cnn_bow = []
     cnn_model.eval()
@@ -115,6 +156,6 @@ def testing_CNN(cnn_model, vec_model, device, max_sen_len, X_test, Y_test_sentim
             probs = cnn_model(bow_vec, False)
             _, predicted = torch.max(probs.data, 1)
             bow_cnn_predictions.append(predicted.cpu().numpy()[0])
-            original_lables_cnn_bow.append(torch.tensor([Y_test_sentiment[index]], dtype=torch.long).cpu().numpy()[0])
+            original_lables_cnn_bow.append(torch.tensor([Y_test[index]], dtype=torch.long).cpu().numpy()[0])
     # compare with true labels and print result
     app_output.output(classification_report(original_lables_cnn_bow, bow_cnn_predictions))

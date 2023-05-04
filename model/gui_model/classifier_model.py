@@ -3,7 +3,14 @@ from model.classifiers import lstm
 
 
 class Classifier:
+    """
+    Object containing trained classifiers for category and sentiment detection for single category
+    """
     def __init__(self, name):
+        """
+        Initialisation of object
+        :param name: classifier method
+        """
         self.name = name
         self.category_models = dict()
         self.category_models['existence'] = None
@@ -11,6 +18,20 @@ class Classifier:
 
     def train_model(self, classifier_method, train_reviews, trans_matrix, target_model, device, source_lang,
                     target_lang, category_name, max_sen_len, models):
+        """
+        Train classifier
+        :param classifier_method: classifier method
+        :param train_reviews: train reviews
+        :param trans_matrix: transformation matrix
+        :param target_model: target vector model
+        :param device: device (cpu/gpu)
+        :param source_lang: source language
+        :param target_lang: target language
+        :param category_name: category name
+        :param max_sen_len: maximal text length of data
+        :param models: models in use
+        :return: classifier model
+        """
 
         X_train = train_reviews['tokens']
         Y_train = train_reviews[category_name]
@@ -28,6 +49,16 @@ class Classifier:
             app_output.exception(f"Unknown classifier method {classifier_method}")
 
     def test_model(self, classifier_method, classifier_model, source_model, device, max_sen_len, words):
+        """
+        Test calssifier
+        :param classifier_method: classifier method
+        :param classifier_model: classifier model
+        :param source_model: source vector model
+        :param device: device (cpu/gpu)
+        :param max_sen_len: maximal text length of data
+        :param words: tokens to be tested
+        :return: probability of positive sentiment
+        """
 
         if classifier_method == "lstm":
             result = lstm.classifie_LSTM(classifier_model, source_model, device, max_sen_len, words)
