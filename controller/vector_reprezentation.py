@@ -1,3 +1,5 @@
+import os
+
 import gensim
 import pandas as pd
 import torch
@@ -27,6 +29,7 @@ def create_vector_model(args):
     # remove empty tokens
     result = [x for x in result if x != ['']]
     # save vector model
+    os.makedirs(os.path.dirname(args.model_path), exist_ok=True)
     if args.model_type == 'ft':
         make_fasttext_model(result, fasttext_file=args.model_path)
     elif args.model_type == 'w2v':
