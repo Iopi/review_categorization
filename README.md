@@ -2,14 +2,14 @@ Reviews Caregorization
 ======================
 
 ![Python 3.9.13](https://img.shields.io/badge/python-3.9.13-blue.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-PyTorch.svg)
-![PyQt5](https://img.shields.io/badge/PyQt5-5.15.9-PyQt5.svg)
-![pandas](https://img.shields.io/badge/pandas-pandas.svg)
-![gensim](https://img.shields.io/badge/gensim-gensim.svg)
-![numpy](https://img.shields.io/badge/numpy-numpy.svg)
-![matplotlib](https://img.shields.io/badge/matplotlib-matplotlib.svg)
-![sklearn](https://img.shields.io/badge/sklearn-sklearn.svg)
-![EasyNMT](https://img.shields.io/badge/EasyNMT-EasyNMT.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-ref.svg)
+![PyQt5](https://img.shields.io/badge/PyQt5-5.15.9-green.svg)
+![pandas](https://img.shields.io/badge/pandas-black.svg)
+![gensim](https://img.shields.io/badge/gensim-black.svg)
+![numpy](https://img.shields.io/badge/numpy-blue.svg)
+![matplotlib](https://img.shields.io/badge/matplotlib-black.svg)
+![sklearn](https://img.shields.io/badge/sklearn-orange.svg)
+![EasyNMT](https://img.shields.io/badge/EasyNMT-black.svg)
 
 
 <!-- [![mne](https://img.shields.io/badge/mne-0.17.1-blueviolet.svg)](https://mne.tools/0.17/install_mne_python.html)
