@@ -80,25 +80,23 @@ Neural network classifiers (*lstm, cnn*) can only be combined with *word2vec* an
 Examples of execution based on what is expected of the program:
 
 - To create a word2vec vector model for the Czech language from the data set feed_cs.xlsx, the command is run:
-
-    paasdad asdf
     
         python main.py -a model -mp data/vec_model/w2v_cs.bin -l cs -fp data/feed/feed_cs.xlsx -mt w2v
   
   
 - For monolingual classification with the tf-idf vector model and the svm classifier for the Czech language, the command is run:
 
-    python main.py -a mono -rp data/review/reviews_cs.xlsx -l cs -mt tfidf -cm svm
+        python main.py -a mono -rp data/review/reviews_cs.xlsx -l cs -mt tfidf -cm svm
 
 
 - For multilingual classification using the transformation matrix with the word2vec vector model and the lstm classifier for Czech training data and German test data, the command is run:
 
-    python main.py -a cross -rp data/review/reviews_cs.xlsx -mp data/vec_model/w2v_cs.bin -l cs -rptest data/ review/reviews_de.xlsx -mptest data/vec_model/w2v_de.bin -ltest de -mt w2v -cm lstm
+        python main.py -a cross -rp data/review/reviews_cs.xlsx -mp data/vec_model/w2v_cs.bin -l cs -rptest data/ review/reviews_de.xlsx -mptest data/vec_model/w2v_de.bin -ltest de -mt w2v -cm lstm
 
 
 - For multilingual classification using translation with fasttext vector model and lstm classifier for Czech training data and German test data, the command is run:
 
-    python main.py -a translate -rp data/review/reviews_cs.xlsx -mp data/vec_model/ft_cs.bin -l cs -rptest data/ review/reviews_de.xlsx -ltest de -mt ft -cm lstm
+        python main.py -a translate -rp data/review/reviews_cs.xlsx -mp data/vec_model/ft_cs.bin -l cs -rptest data/ review/reviews_de.xlsx -ltest de -mt ft -cm lstm
 
 
 ### Application demonstrator
@@ -107,4 +105,4 @@ The program expects a fasttext vector model for each language stored in the file
 
 - The application demonstrator is started with the command:
 
-    python gui.py
+        python gui.py
