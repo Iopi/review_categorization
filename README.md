@@ -34,68 +34,71 @@ The program has two parts - a console application and a demonstrator.
 
 The console application can be started by entering the command python main.py and several required and optional parameters:
    - **–a (action)** – Indicates what action the program should perform. This parameter is always mandatory and makes the other parameters mandatory.
-       - 'mono' -- defines monolingual classification
+       - 'mono' – defines monolingual classification
         ’cross’ – defines multilingual classification using a transformation matrix
        - ’translate’ – defines a multilingual classification using translation
        - ’model’ – defines the creation of a model
       
-   **–mt (model type)** – Specifies the type of vector models. This parameter is always mandatory.
-     – ’ft’ – defines the fasttext model type
-     – ’w2v’ – defines the word2vec model type
-     – ’tfidf’ – defines the tf-idf model type
-     – ’bow’ – defines the bow model type
+   - **–mt (model type)** – Specifies the type of vector models. This parameter is always mandatory.
+     - ’ft’ – defines the fasttext model type
+     - ’w2v’ – defines the word2vec model type
+     - ’tfidf’ – defines the tf-idf model type
+     - ’bow’ – defines the bow model type
     
-   • –mp (model path) – Specifies the path to the file name containing the vector model for the language to be trained. This parameter is mandatory if the model type is word2vec or fasttext.
+   - **–mp (model path)** – Specifies the path to the file name containing the vector model for the language to be trained. This parameter is mandatory if the model type is word2vec or fasttext.
             
-   • –mptest (model path test) – Specifies the path to the file name containing the vector model for the language to be tested. This parameter is mandatory if the program action is ’model’, ’cross’ or ’translate’ and the vector model type is word2vec or fasttext.
+   - **–mptest (model path test)** – Specifies the path to the file name containing the vector model for the language to be tested. This parameter is mandatory if the program action is ’model’, ’cross’ or ’translate’ and the vector model type is word2vec or fasttext.
             
-   • –cm (model type) – Specifies the type of classification models. This parameter is always required.
-     – ’lstm’ – defines the fasttext model type
-     – ’cnn’ – defines the word2vec model type
-     – ’svm’ – defines the Support vector machines model type
-     – ’logreg’ – defines the Logistic regression model type
-     – ’dectree’ – defines the type of Decision tree model
+   - **–cm (model type)** – Specifies the type of classification models. This parameter is always required.
+     - ’lstm’ – defines the fasttext model type
+     - ’cnn’ – defines the word2vec model type
+     - ’svm’ – defines the Support vector machines model type
+     - ’logreg’ – defines the Logistic regression model type
+     - ’dectree’ – defines the type of Decision tree model
     
-   • –rp (reviews path) – Specifies the path to the file name containing the training reviews. This parameter is mandatory if the program action is 'mono', 'cross' or 'translate'.
+   - **–rp (reviews path)** – Specifies the path to the file name containing the training reviews. This parameter is mandatory if the program action is 'mono', 'cross' or 'translate'.
             
-   • –rptest (reviews path test) – Specifies the path to the file name containing the reviews for testing. This parameter is mandatory if the program action is 'cross' or 'translate'.
+   - **–rptest (reviews path test)** – Specifies the path to the file name containing the reviews for testing. This parameter is mandatory if the program action is 'cross' or 'translate'.
             
-   • –l (language) – Specifies the language of the training data. It depends on the language
-             text preprocessing, translation and dictionary for computing the transformation matrix. This parameter is always mandatory.
+   - **–l (language)** – Specifies the language of the training data. Text preprocessing, translation and dictionary for calculating the transformation matrix depend on the language. This parameter is always mandatory.
             
-   • –ltest (language test) – Specifies the language of the test data. This parameter is mandatory if the program action is 'cross' or 'translate'.
+   - **–ltest (language test)** – Specifies the language of the test data. This parameter is mandatory if the program action is 'cross' or 'translate'.
             
-   • –fp (feed path) – Specifies the path to the file name containing the reviews to create the vector model. This parameter is mandatory if the program action is 'model'.
+   - **–fp (feed path)** – Specifies the path to the file name containing the reviews to create the vector model. This parameter is mandatory if the program action is 'model'.
             
                         
-Neural network classifiers (lstm, cnn) can only be combined with word2vec and fasttext text representation, and other classifiers (Support vector machines, Logistic regression and Decision tree) can only be combined with bow and tf-idf text representation. Multilingual transformation can only be used with neural network classifiers (lstm, cnn). After the completion of the program run, the results are displayed in the console itself and in the text file log.txt.
+Neural network classifiers (*lstm, cnn*) can only be combined with *word2vec* and *fasttext* text representation, and other classifiers (*Support vector machines, Logistic regression* and *Decision tree*) can only be combined with *bow* and *tf-idf* text representation. Multilingual transformation can only be used with neural network classifiers (*lstm, cnn*). After the completion of the program run, the results are displayed in the console itself and in the text file *log.txt*.
 
 
-Firstly install Orange3 version 3.23.1. The process can be found here - [Orange3 Download](https://orange.biolab.si/download/#windows).
+### Examples of use
 
-### Install Orange3-Eeg add-on
-After successfully installing Orange3, you can install the Orange3-Eeg add-on package.
+Examples of execution based on what is expected of the program:
 
-1. Download this project from git and extract where you want it to be.
-
-2. Go to main folder of project
-
-        cd orange3-eeg
-
-3. To install the add-on
-    * run
+- To create a word2vec vector model for the Czech language from the data set feed_cs.xlsx, the command is run:
     
-            pip install .
+     python main.py -a model -mp data/vec_model/w2v_cs.bin -l cs -fp data/feed/feed_cs.xlsx -mt w2v
+  
+  
+- For monolingual classification with the tf-idf vector model and the svm classifier for the Czech language, the command is run:
 
-    * or if you want keep the code in development directory run
+     python main.py -a mono -rp data/review/reviews_cs.xlsx -l cs -mt tfidf -cm svm
 
-            pip install -e .
-    
-this will make it so that Orange recognizes the package, and when changes are made
-to the source code it will recognize them too.
 
-4. After the installation, Orange should now be tracking the package, simply run
+- For multilingual classification using the transformation matrix with the word2vec vector model and the lstm classifier for Czech training data and German test data, the command is run:
 
-        python -m Orange.canvas
-    
-the EEG category should show in the left menu in the orange application.
+     python main.py -a cross -rp data/review/reviews_cs.xlsx -mp data/vec_model/w2v_cs.bin -l cs -rptest data/ review/reviews_de.xlsx -mptest data/vec_model/w2v_de.bin -ltest de -mt w2v -cm lstm
+
+
+- For multilingual classification using translation with fasttext vector model and lstm classifier for Czech training data and German test data, the command is run:
+
+     python main.py -a translate -rp data/review/reviews_cs.xlsx -mp data/vec_model/ft_cs.bin -l cs -rptest data/ review/reviews_de.xlsx -ltest de -mt ft -cm lstm
+
+
+### Application demonstrator
+
+The program expects a fasttext vector model for each language stored in the file: data/vec_model/ft_cs.bin, analogously en or de for English and German. So the models must be pre-created by the console application. 
+
+- The application demonstrator is started with the command:
+
+     python gui.py
+     
