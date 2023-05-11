@@ -5,11 +5,11 @@ Reviews Caregorization
 ![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-ref.svg)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15.9-green.svg)
 ![pandas](https://img.shields.io/badge/pandas-black.svg)
-![gensim](https://img.shields.io/badge/gensim-black.svg)
 ![numpy](https://img.shields.io/badge/numpy-blue.svg)
-![matplotlib](https://img.shields.io/badge/matplotlib-black.svg)
+![gensim](https://img.shields.io/badge/gensim-black.svg)
 ![sklearn](https://img.shields.io/badge/sklearn-orange.svg)
-![EasyNMT](https://img.shields.io/badge/EasyNMT-black.svg)
+![matplotlib](https://img.shields.io/badge/matplotlib-black.svg)
+![EasyNMT](https://img.shields.io/badge/EasyNMT-red.svg)
 
 
 <!-- [![mne](https://img.shields.io/badge/mne-0.17.1-blueviolet.svg)](https://mne.tools/0.17/install_mne_python.html)
