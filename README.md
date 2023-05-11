@@ -80,8 +80,10 @@ Neural network classifiers (*lstm, cnn*) can only be combined with *word2vec* an
 Examples of execution based on what is expected of the program:
 
 - To create a word2vec vector model for the Czech language from the data set feed_cs.xlsx, the command is run:
+
+    paasdad asdf
     
-    python main.py -a model -mp data/vec_model/w2v_cs.bin -l cs -fp data/feed/feed_cs.xlsx -mt w2v
+        python main.py -a model -mp data/vec_model/w2v_cs.bin -l cs -fp data/feed/feed_cs.xlsx -mt w2v
   
   
 - For monolingual classification with the tf-idf vector model and the svm classifier for the Czech language, the command is run:
