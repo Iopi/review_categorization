@@ -75,7 +75,7 @@ and several required and optional parameters:
 Neural network classifiers (*lstm, cnn*) can only be combined with *word2vec* and *fasttext* text representation, and other classifiers (*Support vector machines, Logistic regression* and *Decision tree*) can only be combined with *bow* and *tf-idf* text representation. Multilingual transformation can only be used with neural network classifiers (*lstm, cnn*). After the completion of the program run, the results are displayed in the console itself and in the text file *log.txt*.
 
 
-### Examples of use
+#### Examples of use
 
 Examples of execution based on what is expected of the program:
 
@@ -99,7 +99,7 @@ Examples of execution based on what is expected of the program:
         python main.py -a translate -rp data/review/reviews_cs.xlsx -mp data/vec_model/ft_cs.bin -l cs -rptest data/ review/reviews_de.xlsx -ltest de -mt ft -cm lstm
 
 
-### Application demonstrator
+### Demonstrator
 
 The program expects a fasttext vector model for each language stored in the file: data/vec_model/ft_cs.bin, analogously en or de for English and German. So the models must be pre-created by the console application. 
 
