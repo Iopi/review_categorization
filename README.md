@@ -1,8 +1,17 @@
 Reviews Caregorization
 ======================
 
-[![Python 3.9.13](https://img.shields.io/badge/python-%3E=3.9.13-blue.svg)]
-[![pandas](https://img.shields.io/badge/pandas-1.5.0-pandas.svg)]
+![Python 3.9.13](https://img.shields.io/badge/python-3.9.13-blue.svg)
+![pandas](https://img.shields.io/badge/pandas-1.5.0-pandas.svg)
+![gensim](https://img.shields.io/badge/gensim-4.2.0-gensim.svg)
+![numpy](https://img.shields.io/badge/matplotlib-1.23.3-matplotlib.svg)
+![matplotlib](https://img.shields.io/badge/pandas-3.5.0-pandas.svg)
+![scikit-learn](https://img.shields.io/badge/scikit-learn-1.1.2-scikit-learn.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-PyTorch.svg)
+![PyQt5](https://img.shields.io/badge/PyQt5-5.15.9-PyQt5.svg)
+![EasyNMT](https://img.shields.io/badge/EasyNMT-2.0.2-EasyNMT.svg)
+
+
 <!-- [![mne](https://img.shields.io/badge/mne-0.17.1-blueviolet.svg)](https://mne.tools/0.17/install_mne_python.html)
 [![AnyQt](https://img.shields.io/badge/AnyQt--green.svg)](https://pypi.org/project/AnyQt/)
 [![PyQt5](https://img.shields.io/badge/PyQt5--green.svg)](https://pypi.org/project/PyQt5/)
