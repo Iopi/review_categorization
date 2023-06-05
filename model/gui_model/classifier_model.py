@@ -41,7 +41,7 @@ class Classifier:
             model_filename_target = models.get_model_filename(target_lang)
             model_filename_source = models.get_model_filename(source_lang)
 
-            lstm_model = lstm.training_LSTM(target_model, trans_matrix, device, max_sen_len, X_train, Y_train, True,
+            lstm_model = lstm.training_LSTM(target_model, trans_matrix, device, max_sen_len, X_train, Y_train,
                                             is_fasttext, batch_size=1, model_filename_train=model_filename_target,
                                             model_filename_test=model_filename_source)
             return lstm_model
